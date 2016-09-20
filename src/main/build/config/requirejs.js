@@ -27,7 +27,7 @@ module.exports = function (grunt) {
           'scripts/applications/services/application_services': 'empty:',
           'scripts/applications/services/application_environment_services': 'empty:'
         },
-        namespace: 'alien4CloudPremiumLogs',
+        namespace: 'alien4CloudPremiumWorkspace',
 
         baseUrl: '.',
 
