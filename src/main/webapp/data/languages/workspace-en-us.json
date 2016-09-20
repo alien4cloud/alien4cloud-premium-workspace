@@ -1,15 +1,19 @@
 {
-  "COMPONENTS": {
-    "WORKSPACE": "Workspace"
-  },
   "WORKSPACES": {
     "TITLE": "Workspace",
     "UPLOAD": "Upload to workspace",
     "CSAR": {
-      "TITLE": "CSARS"
+      "TITLE": "CSARS",
+      "TEMPLATEAUTHOR": "Author",
+      "WORKSPACE": "Workspace"
     },
     "PROMOTION": {
       "TITLE": "Promotion"
+    },
+    "SCOPE": {
+      "USER": "User Workspace",
+      "APP": "Application Workspace",
+      "ALIEN_GLOBAL_WORKSPACE": "Global Workspace"
     }
   }
 }
