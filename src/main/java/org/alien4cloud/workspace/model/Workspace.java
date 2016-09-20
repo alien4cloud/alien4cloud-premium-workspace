@@ -1,4 +1,4 @@
-package org.alien.workspace.model;
+package org.alien4cloud.workspace.model;
 
 import javax.validation.constraints.NotNull;
 

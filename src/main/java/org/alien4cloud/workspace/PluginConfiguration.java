@@ -1,4 +1,4 @@
-package org.alien.workspace;
+package org.alien4cloud.workspace;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
