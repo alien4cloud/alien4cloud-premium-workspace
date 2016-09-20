@@ -150,34 +150,6 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.10</version>
-        <executions>
-          <execution>
-            <id>unpack</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>alien4cloud</groupId>
-                  <artifactId>alien4cloud-ui</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>nooptimizer</classifier>
-                  <type>war</type>
-                  <includes>**/*</includes>
-                  <excludes>WEB-INF/**/*, META-INF/**/*</excludes>
-                  <outputDirectory>${project.build.directory}/a4c-unpacked</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9</version>
         <executions>
