@@ -33,7 +33,6 @@ define(function (require) {
       $scope.workspacesForUpload = workspacesForUpload;
       $scope.workspacesForSearch = workspacesForSearch;
 
-      $scope.selectedWorkspacesForSearch = [];
       $scope.staticFacets = {};
 
       var defaultWorkspaces = [];

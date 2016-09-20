@@ -1,5 +1,15 @@
 {
+  "COMPONENTS": {
+    "WORKSPACE": "Workspace"
+  },
   "WORKSPACES": {
-    "UPLOAD": "Upload to workspace"
+    "TITLE": "Workspace",
+    "UPLOAD": "Upload to workspace",
+    "CSAR": {
+      "TITLE": "CSARS"
+    },
+    "PROMOTION": {
+      "TITLE": "Promotion"
+    }
   }
 }

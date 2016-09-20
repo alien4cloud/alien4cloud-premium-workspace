@@ -20,7 +20,7 @@ public class WorkspaceService {
         if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_MANAGER)) {
             workspaces.add(Workspace.GLOBAL);
         }
-        if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_BROWSER)) {
+        if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_BROWSER, Role.COMPONENTS_MANAGER)) {
             workspaces.add(new Workspace(Scope.USER, currentUser.getUserId()));
         }
         return workspaces;
@@ -34,5 +34,13 @@ public class WorkspaceService {
             workspaces.add(new Workspace(Scope.USER, currentUser.getUserId()));
         }
         return workspaces;
+    }
+
+    public boolean hasReadAccess(Workspace workspace) {
+        return getAuthorizedWorkspacesForSearch().contains(workspace);
+    }
+
+    public boolean hasWriteAccess(Workspace workspace) {
+        return getAuthorizedWorkspacesForUpload().contains(workspace);
     }
 }
