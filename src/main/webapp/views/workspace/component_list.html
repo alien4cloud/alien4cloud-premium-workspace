@@ -1,0 +1,46 @@
+<div>
+  <div class="vertical-panel-shift" ui-view></div>
+  <div id="upload-csar" class="row" ng-if="workspacesForUpload.length > 0">
+    <div class="col-md-3">
+      <div class="well">
+        <div>{{'COMPONENTS.WORKSPACES.UPLOAD' | translate}}</div>
+        <div class="dropdown">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            {{selectedWorkspaceForUpload.id}}
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" style="z-index: 2000;">
+            <li ng-repeat="workspace in workspacesForUpload"
+                ng-if="workspace !== selectedWorkspaceForUpload"
+                class="option-selected"
+                style="z-index: 2000;">
+              <a ng-click="selectWorkspaceForUpload(workspace)">{{workspace.id}}</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <upload-directive
+          target-url="'rest/latest/csars'"
+          request-data="selectedWorkspaceForUploadData"
+          drag-and-drop-message="'COMPONENTS.DRAG_DROP_UPLOAD'"
+          button-message="'COMPONENTS.UPLOAD'"
+          upload-success-callback="uploadSuccessCallback(data)">
+      </upload-directive>
+    </div>
+  </div>
+
+  <div class="row">
+    <alien-search-node-type
+        refresh="refresh"
+        display-detail-pannel="true"
+        on-select-item="openComponent(item)"
+        global-context="true"
+        height-info="heightInfo"
+        width-info="widthInfo"
+        default-filters="defaultFilters"
+        static-facets="staticFacets"
+        badges="badges"/>
+  </div>
+</div>

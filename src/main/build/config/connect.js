@@ -22,7 +22,7 @@ module.exports = {
   livereload: {
     options: {
       open: true,
-      base: ['.tmp', '<%= yeoman.serveOverride %>', '<%= yeoman.unpacked %>', '<%= yeoman.app %>'],
+      base: ['.tmp', '<%= yeoman.serveOverride %>', '<%= yeoman.alienSource %>/.tmp', '<%= yeoman.alienSource %>/src/main/webapp/', '<%= yeoman.app %>'],
       middleware: function(connect, options) {
         if (!Array.isArray(options.base)) {
           options.base = [options.base];
