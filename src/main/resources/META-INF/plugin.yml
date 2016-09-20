@@ -2,5 +2,5 @@ id: alien4cloud-premium-workspace
 name: Alien 4 Cloud Premium Logs.
 version: ${project.version}
 description: Provider logs management.
-configuration_class: org.alien.workspace.PluginConfiguration
+configuration_class: org.alien4cloud.workspace.PluginConfiguration
 ui_entry_point: scripts/plugin.js
