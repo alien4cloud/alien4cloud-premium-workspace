@@ -20,11 +20,11 @@ define(function (require) {
         return {};
       }],
 
-      // badges to display. objet with the folowing properties:
+      // badges to display. object with the following properties:
       //   name: the name of the badge
       //   tooltip: the message to display on the tooltip
       //   imgSrc: the image to display
-      //   canDislay: a funtion to decide if the badge is displayable for a component. takes as param the component and must return true or false.
+      //   canDisplay: a funtion to decide if the badge is displayable for a component. takes as param the component and must return true or false.
       //   onClick: callback for the click on the displayed badge. takes as param: the component, the $state object
       badges: [function () {
         return [];
