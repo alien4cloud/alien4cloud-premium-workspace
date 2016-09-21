@@ -6,6 +6,7 @@ define(function (require) {
   var states = require('states');
   var _ = require('lodash');
   var prefixer = require('scripts/plugin-url-prefixer');
+  require('scripts/workspace/directives/display_workspace.js');
 
   // override component list to have the list of workspaces
   states.merge('components.list', {
@@ -33,7 +34,6 @@ define(function (require) {
       $scope.workspacesForUpload = workspacesForUpload;
       $scope.workspacesForSearch = workspacesForSearch;
 
-      $scope.selectedWorkspacesForSearch = [];
       $scope.staticFacets = {};
 
       var defaultWorkspaces = [];
