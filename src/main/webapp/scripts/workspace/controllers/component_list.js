@@ -14,39 +14,24 @@ define(function (require) {
     controller: 'WorkspaceSearchComponentCtrl',
     resolve: {
       workspaces: ['workspaceServices', function (workspaceServices) {
-        return workspaceServices.get().$promise.then(function (response) {
+        return workspaceServices.resource.get().$promise.then(function (response) {
           return response.data;
         });
       }],
     }
   });
 
-  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceSearchComponentCtrl', ['$scope', '$state', 'resizeServices', 'defaultFilters', 'badges', 'workspaces',
-    function ($scope, $state, resizeServices, defaultFilters, badges, workspaces) {
+  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceSearchComponentCtrl', ['$scope', '$state', 'resizeServices', 'defaultFilters', 'badges', 'workspaceServices', 'workspaces',
+    function ($scope, $state, resizeServices, defaultFilters, badges, workspaceServices, workspaces) {
       $scope.defaultFilters = defaultFilters;
       $scope.badges = badges;
 
-
-      $scope.staticFacets = {};
-
-      var defaultWorkspaces = [];
-      var workspacesForUpload = [];
-      _.each(workspaces, function(workspace) {
-        if(_.includes(workspace.roles, 'COMPONENTS_MANAGER')) {
-          workspacesForUpload.push(workspace);
-        }
-        if(_.includes(workspace.roles, 'COMPONENTS_BROWSER')) {
-          if(_.undefined($scope.staticFacets.workspace)) {
-            $scope.staticFacets.workspace = [];
-          }
-          $scope.staticFacets.workspace.push({facetValue: workspace.id, count: ''});
-          defaultWorkspaces.push(workspace.id);
-        }
-      });
-      if(defaultWorkspaces.length > 0) {
-        $scope.defaultFilters.workspace =  defaultWorkspaces;
+      var processedWorkspaces = workspaceServices.process(workspaces, 'COMPONENTS_MANAGER');
+      $scope.staticFacets = processedWorkspaces.staticFacets;
+      $scope.workspacesForUpload = processedWorkspaces.writeWorkspaces;
+      if(processedWorkspaces.defaultWorkspaces.length > 0) {
+        $scope.defaultFilters.workspace =  processedWorkspaces.defaultWorkspaces;
       }
-      $scope.workspacesForUpload = workspacesForUpload;
 
       $scope.selectWorkspaceForUpload = function (workspace) {
         $scope.selectedWorkspaceForUpload = workspace;
@@ -54,7 +39,9 @@ define(function (require) {
           workspace: $scope.selectedWorkspaceForUpload.id
         };
       };
-      $scope.selectWorkspaceForUpload($scope.workspacesForUpload[0]);
+      if($scope.workspacesForUpload.length>0) {
+        $scope.selectWorkspaceForUpload($scope.workspacesForUpload[0]);
+      }
 
       $scope.uploadSuccessCallback = function (data) {
         $scope.refresh = data;
