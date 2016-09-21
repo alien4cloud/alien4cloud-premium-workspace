@@ -38,7 +38,7 @@
             <ul class="dropdown-menu" role="menu" style="z-index: 2000;">
               <li ng-repeat="workspace in csarDTO.availablePromotionTargets"
                   class="option-selected">
-                <a ng-click="promoteToWorkspace(csarDTO.csar, workspace)">
+                <a ng-click="calculateImpact(csarDTO.csar, workspace)">
                   <display-workspace workspace-id="{{workspace.id}}"></display-workspace>
                 </a>
               </li>

@@ -8,7 +8,19 @@
       "WORKSPACE": "Workspace"
     },
     "PROMOTION": {
-      "TITLE": "Promotion"
+      "TITLE": "Promotion",
+      "MOVE": {
+        "TITLE": "Move CSAR to another workspace"
+      },
+      "REQUEST": {
+        "TITLE": "Request for CSAR promotion to another workspace"
+      },
+      "IMPACT": {
+        "TITLE": "Here is the list of CSAR that will be moved",
+        "RESOURCE_NAME": "Resource's name",
+        "RESOURCE_TYPE": "Resource's type",
+        "NOT_USED": "The CSAR is not used"
+      }
     },
     "SCOPE": {
       "USER": "User Workspace",

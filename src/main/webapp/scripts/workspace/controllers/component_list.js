@@ -17,7 +17,7 @@ define(function (require) {
         return workspaceServices.resource.get().$promise.then(function (response) {
           return response.data;
         });
-      }],
+      }]
     }
   });
 
