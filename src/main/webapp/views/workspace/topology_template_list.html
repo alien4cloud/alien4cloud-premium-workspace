@@ -1,5 +1,5 @@
 <div>
-  <div id="upload-csar" class="row" ng-if="workspacesForUpload.length > 0">
+  <div id="upload-csar-topology" class="row" ng-if="workspacesForUpload.length > 0">
     <div class="col-md-3">
       <div class="well">
         <div>{{'WORKSPACES.UPLOAD' | translate}}</div>
@@ -19,6 +19,11 @@
             </li>
           </ul>
         </div>
+        <div>
+          <button class="btn btn-success" ng-click="openNewTopologyTemplate()" id="btn-add-template">
+            <i class="fa fa fa-plus-circle"></i> {{ 'TEMPLATE.NEW' | translate}}
+          </button>
+        </div>
       </div>
     </div>
     <div class="col-md-9">
@@ -32,16 +37,10 @@
     </div>
   </div>
 
-  <div class="row">
-    <alien-search-node-type
-        refresh="refresh"
-        display-detail-pannel="true"
-        on-select-item="openComponent(item)"
-        global-context="true"
-        height-info="heightInfo"
-        width-info="widthInfo"
-        default-filters="defaultFilters"
-        static-facets="staticFacets"
-        badges="badges"/>
-  </div>
+  <topology-template-search
+    on-select="onSelect(topology)"
+    on-select-for-clone="openNewTopologyTemplate(topology)"
+    default-filters="defaultFilters"
+    static-facets="staticFacets"
+    archive-link="true" />
 </div>

@@ -21,10 +21,10 @@ define(function (require) {
     }
   });
 
-  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceSearchComponentCtrl', ['$scope', '$state', 'resizeServices', 'defaultFilters', 'badges', 'workspaceServices', 'workspaces',
-    function ($scope, $state, resizeServices, defaultFilters, badges, workspaceServices, workspaces) {
-      $scope.defaultFilters = defaultFilters;
-      $scope.badges = badges;
+  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceSearchComponentCtrl', ['$controller','$scope', '$state', 'resizeServices', 'defaultFilters', 'badges', 'workspaceServices', 'workspaces',
+    function ($controller, $scope, $state, resizeServices, defaultFilters, badges, workspaceServices, workspaces) {
+      // Apply opensource controller first
+      $controller('SearchComponentCtrl', {$scope: $scope, $state: $state, resizeServices: resizeServices, defaultFilters: defaultFilters, badges: badges});
 
       var processedWorkspaces = workspaceServices.process(workspaces, 'COMPONENTS_MANAGER');
       $scope.staticFacets = processedWorkspaces.staticFacets;
@@ -42,29 +42,6 @@ define(function (require) {
       if($scope.workspacesForUpload.length>0) {
         $scope.selectWorkspaceForUpload($scope.workspacesForUpload[0]);
       }
-
-      $scope.uploadSuccessCallback = function (data) {
-        $scope.refresh = data;
-      };
-
-      $scope.openComponent = function (component) {
-        $state.go('components.detail', {id: component.id});
-      };
-
-      function onResize(width, height) {
-        $scope.heightInfo = {height: height};
-        $scope.widthInfo = {width: width};
-        $scope.$digest();
-      }
-
-      // register for resize events
-      window.onresize = function () {
-        $scope.onResize();
-      };
-
-      resizeServices.register(onResize, 0, 0);
-      $scope.heightInfo = {height: resizeServices.getHeight(0)};
-      $scope.widthInfo = {width: resizeServices.getWidth(0)};
     }
   ]);
 });
