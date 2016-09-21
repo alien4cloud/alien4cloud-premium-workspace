@@ -13,40 +13,40 @@ define(function (require) {
     templateUrl: prefixer.prefix('views/workspace/component_list.html'),
     controller: 'WorkspaceSearchComponentCtrl',
     resolve: {
-      workspacesForUpload: ['workspaceServices', function (workspaceServices) {
-        return workspaceServices.upload.get().$promise.then(function (response) {
+      workspaces: ['workspaceServices', function (workspaceServices) {
+        return workspaceServices.get().$promise.then(function (response) {
           return response.data;
         });
       }],
-      workspacesForSearch: ['workspaceServices', function (workspaceServices) {
-        return workspaceServices.search.get().$promise.then(function (response) {
-          return response.data;
-        });
-      }]
     }
   });
 
-  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceSearchComponentCtrl', ['$scope', '$state', 'resizeServices', 'defaultFilters', 'badges', 'workspacesForUpload', 'workspacesForSearch',
-    function ($scope, $state, resizeServices, defaultFilters, badges, workspacesForUpload, workspacesForSearch) {
+  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceSearchComponentCtrl', ['$scope', '$state', 'resizeServices', 'defaultFilters', 'badges', 'workspaces',
+    function ($scope, $state, resizeServices, defaultFilters, badges, workspaces) {
       $scope.defaultFilters = defaultFilters;
       $scope.badges = badges;
 
-      $scope.workspacesForUpload = workspacesForUpload;
-      $scope.workspacesForSearch = workspacesForSearch;
 
       $scope.staticFacets = {};
 
       var defaultWorkspaces = [];
-      _.each(workspacesForSearch, function(searchWorkspace) {
-        if(_.undefined($scope.staticFacets.workspace)) {
-          $scope.staticFacets.workspace = [];
+      var workspacesForUpload = [];
+      _.each(workspaces, function(workspace) {
+        if(_.includes(workspace.roles, 'COMPONENTS_MANAGER')) {
+          workspacesForUpload.push(workspace);
         }
-        $scope.staticFacets.workspace.push({facetValue: searchWorkspace.id, count: ''});
-        defaultWorkspaces.push(searchWorkspace.id);
+        if(_.includes(workspace.roles, 'COMPONENTS_BROWSER')) {
+          if(_.undefined($scope.staticFacets.workspace)) {
+            $scope.staticFacets.workspace = [];
+          }
+          $scope.staticFacets.workspace.push({facetValue: workspace.id, count: ''});
+          defaultWorkspaces.push(workspace.id);
+        }
       });
       if(defaultWorkspaces.length > 0) {
         $scope.defaultFilters.workspace =  defaultWorkspaces;
       }
+      $scope.workspacesForUpload = workspacesForUpload;
 
       $scope.selectWorkspaceForUpload = function (workspace) {
         $scope.selectedWorkspaceForUpload = workspace;

@@ -43,18 +43,10 @@ public class WorkspaceController {
 
     @ApiOperation(value = "Get workspaces that the current user has the right to upload to", authorizations = { @Authorization("COMPONENTS_BROWSER"),
             @Authorization("COMPONENTS_MANAGER") })
-    @RequestMapping(value = "upload", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER')")
-    public RestResponse<List<Workspace>> getAuthorizedWorkspacesForUpload() {
-        return RestResponseBuilder.<List<Workspace>> builder().data(workspaceService.getAuthorizedWorkspacesForUpload()).build();
-    }
-
-    @ApiOperation(value = "Get workspaces that the current user has the right to read csars / components from", authorizations = {
-            @Authorization("COMPONENTS_BROWSER"), @Authorization("COMPONENTS_MANAGER") })
-    @RequestMapping(value = "search", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER')")
-    public RestResponse<List<Workspace>> getAuthorizedWorkspacesForSearch() {
-        return RestResponseBuilder.<List<Workspace>> builder().data(workspaceService.getAuthorizedWorkspacesForSearch()).build();
+    public RestResponse<List<Workspace>> getUserWorkspaces() {
+        return RestResponseBuilder.<List<Workspace>> builder().data(workspaceService.getUserWorkspaces()).build();
     }
 
     @ApiOperation(value = "Search for csars with workspaces information", authorizations = { @Authorization("COMPONENTS_BROWSER"),

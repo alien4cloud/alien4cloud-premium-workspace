@@ -21,8 +21,8 @@ define(function (require) {
   });
 
   modules.get('a4c-topology-templates', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceTopologyTemplateListCtrl',
-    ['$scope', '$state', 'resizeServices', 'defaultFilters', 'TopologyTemplateListCtrl', 'workspacesForUpload', 'workspacesForSearch',
-    function ($scope, $state, resizeServices, defaultFilters, TopologyTemplateListCtrl, workspacesForUpload, workspacesForSearch) {
+    ['$scope', '$state', 'resizeServices', 'defaultFilters', 'TopologyTemplateListCtrl', 'workspaceServices',
+    function ($scope, $state, resizeServices, defaultFilters, TopologyTemplateListCtrl, workspaceServices) {
       // $scope.defaultFilters = defaultFilters;
       // $scope.badges = badges;
       //
