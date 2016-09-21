@@ -1,7 +1,12 @@
 package org.alien4cloud.workspace.model;
 
+import java.util.Set;
+
 import javax.validation.constraints.NotNull;
 
+import com.google.common.collect.Sets;
+
+import alien4cloud.security.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,24 +17,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Workspace {
-
-    /**
-     * The global workspace
-     */
-    public static final Workspace GLOBAL = new Workspace(Scope.GLOBAL, null);
-
-    /**
-     * Scope of the workspace, it can be either user, application or null for global workspace
-     */
+    /** Scope of the workspace, it can be either user, application or null for global workspace. */
     private Scope scope;
 
-    /**
-     * Name of the workspace identify it within the scope
-     */
+    /** Name of the workspace identify it within the scope */
     @NotNull
-    private String id;
+    private String name;
+    /** Use role on the workspace. */
+    private Set<Role> roles = Sets.newHashSet();
 
-    private boolean canWriteTopology;
-    private boolean canWriteTypes;
-    private boolean canRead;
+    public String getId() {
+        return scope + (name != null ? (":" + name) : "");
+    }
 }
