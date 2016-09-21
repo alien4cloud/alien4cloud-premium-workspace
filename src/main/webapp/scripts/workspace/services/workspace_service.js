@@ -9,5 +9,4 @@ define(function (require) {
       search: $alresource('/rest/latest/workspaces/search')
     };
   }]);
-
 });

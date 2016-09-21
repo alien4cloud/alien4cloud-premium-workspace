@@ -27,9 +27,9 @@ public class Workspace {
      * Name of the workspace identify it within the scope
      */
     @NotNull
-    private String name;
+    private String id;
 
-    public String getId() {
-        return scope + (name != null ? (":" + name) : "");
-    }
+    private boolean canWriteTopology;
+    private boolean canWriteTypes;
+    private boolean canRead;
 }
