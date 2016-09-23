@@ -3,12 +3,14 @@ package org.alien4cloud.workspace.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
-import org.alien4cloud.tosca.catalog.index.TopologyCatalogService;
-import org.alien4cloud.tosca.catalog.index.ToscaTypeSearchService;
+import alien4cloud.common.AlienConstants;
+import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
+import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
 import org.alien4cloud.tosca.model.Csar;
 import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
@@ -24,9 +26,9 @@ import alien4cloud.security.model.User;
 @Service
 public class WorkspaceService {
     @Inject
-    private TopologyCatalogService topologyCatalogService;
+    private ITopologyCatalogService topologyCatalogService;
     @Inject
-    private ToscaTypeSearchService typesCatalogService;
+    private IToscaTypeSearchService typesCatalogService;
 
     private Workspace getGlobalWorkspace(Workspace globalWorkspace) {
         if (globalWorkspace == null) {
@@ -85,6 +87,16 @@ public class WorkspaceService {
         List<Workspace> workspaces = new ArrayList<>();
         addIfNotNull(workspaces, globalWorkspace);
         addIfNotNull(workspaces, userWorkspace);
+        return workspaces;
+    }
+
+    public Set<String> getUserWorkspaceIds() {
+        Set<String> workspaces = Sets.newHashSet();
+        User currentUser = AuthorizationUtil.getCurrentUser();
+        if (AuthorizationUtil.hasOneRoleIn(Role.ARCHITECT, Role.COMPONENTS_MANAGER)) {
+            workspaces.add(AlienConstants.GLOBAL_WORKSPACE_ID);
+            workspaces.add(Scope.USER.name() + currentUser.getUserId());
+        }
         return workspaces;
     }
 
