@@ -14,8 +14,8 @@ import javax.annotation.Resource;
 import javax.inject.Inject;
 
 import org.alien4cloud.tosca.catalog.index.CsarService;
+import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
 import org.alien4cloud.tosca.catalog.index.TopologyCatalogService;
-import org.alien4cloud.tosca.catalog.index.ToscaTypeSearchService;
 import org.alien4cloud.tosca.model.Csar;
 import org.alien4cloud.tosca.model.templates.Topology;
 import org.alien4cloud.tosca.model.types.AbstractToscaType;
@@ -41,7 +41,7 @@ public class WorkspaceService {
     @Inject
     private TopologyServiceCore topologyServiceCore;
     @Inject
-    private ToscaTypeSearchService typesCatalogService;
+    private IToscaTypeSearchService typesCatalogService;
     @Inject
     private CsarService csarService;
     @Resource(name = "alien-es-dao")
