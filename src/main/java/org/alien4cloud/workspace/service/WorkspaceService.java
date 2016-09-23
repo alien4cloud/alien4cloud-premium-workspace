@@ -3,7 +3,6 @@ package org.alien4cloud.workspace.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +16,6 @@ import javax.inject.Inject;
 import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.TopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.ToscaTypeSearchService;
-import org.alien4cloud.tosca.model.CSARDependency;
 import org.alien4cloud.tosca.model.Csar;
 import org.alien4cloud.tosca.model.templates.Topology;
 import org.alien4cloud.tosca.model.types.AbstractToscaType;
@@ -34,6 +32,7 @@ import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.Role;
 import alien4cloud.security.model.User;
 import alien4cloud.topology.TopologyServiceCore;
+import alien4cloud.utils.AlienUtils;
 
 @Service
 public class WorkspaceService {
@@ -159,16 +158,22 @@ public class WorkspaceService {
             // TODO throw proper exception
             throw new RuntimeException("The csar cannot be moved to the given target");
         }
-        Set<CSARDependency> dependencies = csarService.getAllDependencies(csar.getName(), csar.getVersion());
-        List<Csar> csarDependencies = dependencies.stream().map(csarDependency -> csarService.get(csarDependency.getName(), csarDependency.getVersion()))
-                .collect(Collectors.toList());
-        Map<String, List<Usage>> usageMap = new HashMap<>();
-        usageMap.put(csar.getId(), csarService.getCsarRelatedResourceList(csar));
-        csarDependencies.forEach(csarDependency -> usageMap.put(csarDependency.getId(), csarService.getCsarRelatedResourceList(csarDependency)));
+        // Retrieve all transitive dependencies of the promoted CSAR
+        List<Csar> csarDependencies = AlienUtils.safe(csar.getDependencies()).stream()
+                .map(csarDependency -> csarService.get(csarDependency.getName(), csarDependency.getVersion())).collect(Collectors.toList());
+        // Filter out CSARs which are already on the target workspace
         Map<String, Csar> impactedCSARs = Stream
                 .concat(Stream.of(csar), csarDependencies.stream().filter(csarDependency -> !csarDependency.getWorkspace().equals(targetWorkSpace)))
                 .collect(Collectors.toMap(Csar::getId, element -> element));
-        return new CSARPromotionImpact(usageMap, impactedCSARs, hasWriteRoles(targetWorkSpace, getExpectedRolesToPromoteCSAR(csar)));
+        // Filter out usages that concerns impacted CSARs of the promotion
+        Map<String, List<Usage>> usageMap = impactedCSARs.values().stream()
+                .collect(Collectors.toMap(Csar::getId, impactedCSAR -> csarService.getCsarRelatedResourceList(impactedCSAR).stream()
+                        .filter(usage -> !impactedCSARs.containsKey(usage.getResourceId())).collect(Collectors.toList())));
+        // Filter out csar with no usage found
+        return new CSARPromotionImpact(
+                usageMap.entrySet().stream().filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+                impactedCSARs, hasWriteRoles(targetWorkSpace, getExpectedRolesToPromoteCSAR(csar)));
     }
 
     public CSARPromotionImpact getCSARPromotionImpact(String csarName, String csarVersion, String targetWorkSpace) {

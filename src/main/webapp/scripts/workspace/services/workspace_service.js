@@ -7,7 +7,7 @@ define(function (require) {
   modules.get('alien4cloud-premium-workspace', ['ngResource']).factory('workspaceServices', ['$alresource', function ($alresource) {
     return {
       resource: $alresource('rest/latest/workspaces'),
-      promotionImpact: $alresource('rest/latest/workspaces/promotions/impact'),
+      promotionImpact: $alresource('rest/latest/workspaces/promotion-impact'),
       promotions: $alresource('rest/latest/workspaces/promotions'),
       process: function (workspaces, writeRole) {
         var result = {

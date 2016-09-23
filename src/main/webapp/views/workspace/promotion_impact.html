@@ -1,48 +1,73 @@
 <div>
   <div class="modal-header">
-    <h4 ng-if="impact.hasWriteAccessOnTarget">{{ 'WORKSPACES.PROMOTION.MOVE.TITLE' | translate}}</h4>
-    <h4 ng-if="!impact.hasWriteAccessOnTarget">{{ 'WORKSPACES.PROMOTION.REQUEST.TITLE' | translate}}</h4>
+    <h3 ng-if="impact.hasWriteAccessOnTarget">{{ 'WORKSPACES.PROMOTION.MOVE.TITLE' | translate}}</h3>
+    <h3 ng-if="!impact.hasWriteAccessOnTarget">{{ 'WORKSPACES.PROMOTION.REQUEST.TITLE' | translate}}</h3>
   </div>
   <div class="modal-body">
     <div class="row">
       <div class="col-md-12">
-        <h4>{{ 'WORKSPACES.PROMOTION.IMPACT.TITLE' | translate}}</h4>
+        <h5 ng-if="!isPromotionPossible" class="text-danger">
+          <i class="fa fa-warn"></i> {{ 'WORKSPACES.PROMOTION.IMPOSSIBLE' |translate}}
+        </h5>
+        <h5 ng-if="isPromotionPossible">{{ 'WORKSPACES.PROMOTION.IMPACT.TITLE' | translate}}</h5>
       </div>
     </div>
     <div class="row">
       <div class="col-md-12">
         <accordion close-others="oneAtATime">
-          <accordion-group ng-repeat="(csarId, csar) in impact.impactedCsars">
+          <accordion-group is-open="status.open" ng-repeat="(csarId, csar) in impact.impactedCsars">
             <accordion-heading>
-              <span>{{csar.name}} {{csar.version}}</span>
-              <i class="pull-right fa" ng-class="{'fa-caret-down': status.open, 'fa-caret-right': !status.open}"></i>
+              <div
+                  ng-class="{'text-success': !impact.currentUsages || !impact.currentUsages[csarId] || impact.currentUsages[csarId].length == 0, 'text-danger': impact.currentUsages[csarId].length > 0}">
+                <span><i class="fa fa-archive"></i> {{csar.name}}</span>
+                <span class="pull-right">
+                  {{csar.version}}
+                  <i class="fa" ng-class="{'fa-caret-down': status.open, 'fa-caret-right': !status.open}"></i>
+                </span>
+              </div>
             </accordion-heading>
-            <span ng-if="impact.currentUsages[csarId].length == 0">{{ 'WORKSPACES.PROMOTION.IMPACT.NOT_USED' | translate }}</span>
-            <table ng-if="impact.currentUsages[csarId].length > 0" class="table table-hover">
-              <thead>
-              <tr>
-                <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_NAME' | translate }}</th>
-                <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_TYPE' | translate }}</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr ng-repeat="usage in impact.currentUsages[csarId]">
-                <td>
-                  {{usage.resourceName}}
-                </td>
-                <td>
-                  {{usage.resourceType}}
-                </td>
-              </tr>
-              </tbody>
-            </table>
+            <h5 ng-if="!impact.currentUsages || !impact.currentUsages[csarId] || impact.currentUsages[csarId].length == 0">
+              {{'WORKSPACES.PROMOTION.IMPACT.NOT_USED' | translate}}</h5>
+            <div ng-if="impact.currentUsages[csarId].length > 0">
+              <div class="row">
+                <div class="col-md-12">
+                  <h5 class="text-danger">{{'WORKSPACES.PROMOTION.IMPACT.USED' | translate}}</h5>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-hover">
+                    <thead>
+                    <tr>
+                      <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_NAME' | translate }}</th>
+                      <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_VERSION' | translate }}</th>
+                      <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_TYPE' | translate }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="usage in impact.currentUsages[csarId]">
+                      <td>
+                        {{usage.resourceName}}
+                      </td>
+                      <td>
+                        {{getResourceVersion(usage.resourceId)}}
+                      </td>
+                      <td>
+                        {{usage.resourceType}}
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </accordion-group>
         </accordion>
       </div>
     </div>
   </div>
   <div class="modal-footer">
-    <a class="btn btn-primary" ng-click="ok()">
+    <a class="btn btn-primary" ng-click="ok()" ng-disabled="!isPromotionPossible">
       {{'OK' | translate}}
     </a>
     <a class="btn btn-default" ng-click="cancel()">

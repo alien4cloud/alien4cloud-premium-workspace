@@ -73,7 +73,7 @@ public class WorkspaceController {
 
     @ApiOperation(value = "Calculate the impact of the promotion", authorizations = { @Authorization("COMPONENTS_BROWSER"),
             @Authorization("COMPONENTS_MANAGER"), @Authorization("ARCHITECT") })
-    @RequestMapping(value = "promotions/impact", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "promotion-impact", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
     public RestResponse<CSARPromotionImpact> getPromotionImpact(@RequestParam String csarName, @RequestParam String csarVersion,
             @RequestParam String targetWorkspace) {
@@ -87,7 +87,7 @@ public class WorkspaceController {
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
     public RestResponse<Void> performPromotion(@RequestBody PromotionRequest promotionRequest) {
         // TODO may return promotion request's id that is created if the user does not have write access on the target workspace
-        workspaceService.promoteCSAR(promotionRequest.getCsarName(), promotionRequest.getCsarVersion(), promotionRequest.getWorkspace());
+        workspaceService.promoteCSAR(promotionRequest.getCsarName(), promotionRequest.getCsarVersion(), promotionRequest.getTargetWorkspace());
         return RestResponseBuilder.<Void> builder().build();
     }
 }

@@ -20,5 +20,5 @@ public class PromotionRequest {
     private String csarVersion;
 
     @NotNull
-    private String workspace;
+    private String targetWorkspace;
 }
