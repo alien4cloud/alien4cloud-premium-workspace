@@ -30,20 +30,22 @@
         <td>{{csarDTO.csar.templateAuthor}}</td>
         <td>{{(csarDTO.csar.importDate | date:'medium') || '---' }}</td>
         <td>
-          <div class="dropdown">
+          <div ng-if="csarDTO.availablePromotionTargets.length > 0" class="dropdown">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
               <display-workspace workspace-id="{{csarDTO.csar.workspace}}"></display-workspace>
               <span class="caret"></span>
             </button>
-            <ul class="dropdown-menu" role="menu" style="z-index: 2000;">
+            <ul class="dropdown-menu" role="menu">
               <li ng-repeat="workspace in csarDTO.availablePromotionTargets"
                   class="option-selected">
-                <a ng-click="promoteToWorkspace(csarDTO.csar, workspace)">
+                <a ng-click="calculateImpact(csarDTO.csar, workspace)">
                   <display-workspace workspace-id="{{workspace.id}}"></display-workspace>
                 </a>
               </li>
             </ul>
           </div>
+          <display-workspace ng-if="csarDTO.availablePromotionTargets.length == 0"
+                             workspace-id="{{csarDTO.csar.workspace}}"></display-workspace>
         </td>
       </tr>
       </tbody>

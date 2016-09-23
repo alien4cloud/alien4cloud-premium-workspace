@@ -1,27 +1,36 @@
 package org.alien4cloud.workspace.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
 import alien4cloud.common.AlienConstants;
+import alien4cloud.dao.IGenericSearchDAO;
+import alien4cloud.model.common.Usage;
+import alien4cloud.security.AuthorizationUtil;
+import alien4cloud.security.model.Role;
+import alien4cloud.security.model.User;
+import alien4cloud.topology.TopologyServiceCore;
+import alien4cloud.utils.AlienUtils;
+import com.google.common.collect.Sets;
+import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
 import org.alien4cloud.tosca.model.Csar;
+import org.alien4cloud.tosca.model.templates.Topology;
+import org.alien4cloud.tosca.model.types.AbstractToscaType;
+import org.alien4cloud.workspace.model.CSARPromotionImpact;
 import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.springframework.stereotype.Service;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
-import alien4cloud.security.AuthorizationUtil;
-import alien4cloud.security.model.Role;
-import alien4cloud.security.model.User;
+import javax.annotation.Resource;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class WorkspaceService {
@@ -29,6 +38,12 @@ public class WorkspaceService {
     private ITopologyCatalogService topologyCatalogService;
     @Inject
     private IToscaTypeSearchService typesCatalogService;
+    @Inject
+    private TopologyServiceCore topologyServiceCore;
+    @Inject
+    private CsarService csarService;
+    @Resource(name = "alien-es-dao")
+    private IGenericSearchDAO alienDAO;
 
     private Workspace getGlobalWorkspace(Workspace globalWorkspace) {
         if (globalWorkspace == null) {
@@ -106,23 +121,28 @@ public class WorkspaceService {
         }
     }
 
-    private boolean hasRoles(String workspaceId, List<Role> expectedRoles) {
-        return getUserWorkspaces().stream().filter(workspace -> workspace.getId().equals(workspaceId)).filter(workspace -> {
-            for (Role expectedRole : expectedRoles) {
-                if (workspace.getRoles().contains(expectedRole)) {
-                    continue;
-                }
-                return false;
-            }
-            return true;
-        }).findFirst().isPresent();
+    private boolean hasRoles(String workspaceId, Set<Role> expectedRoles) {
+        return getUserWorkspaces().stream().filter(workspace -> workspace.getId().equals(workspaceId) && workspace.getRoles().containsAll(expectedRoles))
+                .findFirst().isPresent();
     }
 
-    private boolean hasWriteRoles(String workspaceId, List<Role> expectedRoles) {
-        if (expectedRoles.isEmpty()) { // either component manager or architect
-            return hasRoles(workspaceId, Lists.newArrayList(Role.COMPONENTS_MANAGER)) || hasRoles(workspaceId, Lists.newArrayList(Role.ARCHITECT));
+    private boolean hasWriteRoles(String workspaceId, Set<Role> expectedRoles) {
+        if (expectedRoles.isEmpty()) {
+            // either component manager or architect
+            return hasRoles(workspaceId, Collections.singleton(Role.COMPONENTS_MANAGER)) || hasRoles(workspaceId, Collections.singleton(Role.ARCHITECT));
         }
         return hasRoles(workspaceId, expectedRoles);
+    }
+
+    private Set<Role> getExpectedRolesToPromoteCSAR(Csar csar) {
+        Set<Role> expectedRoles = new HashSet<>();
+        if (topologyCatalogService.exists(csar.getId())) {
+            expectedRoles.add(Role.ARCHITECT);
+        }
+        if (typesCatalogService.hasTypes(csar.getName(), csar.getVersion())) {
+            expectedRoles.add(Role.COMPONENTS_MANAGER);
+        }
+        return expectedRoles;
     }
 
     /**
@@ -132,19 +152,71 @@ public class WorkspaceService {
      * @return the list of available targets
      */
     public List<Workspace> getPromotionTargets(Csar csar) {
-        List<Role> expectedRoles = Lists.newArrayList();
-        if (topologyCatalogService.exists(csar.getId())) {
-            expectedRoles.add(Role.ARCHITECT);
-        }
-        if (typesCatalogService.hasTypes(csar.getName(), csar.getVersion())) {
-            expectedRoles.add(Role.COMPONENTS_MANAGER);
-        }
-        if (hasWriteRoles(csar.getWorkspace(), expectedRoles)) {
-            return getUserWorkspaces().stream().filter(workspace -> !workspace.getId().equals(csar.getWorkspace())).filter(workspace -> {
-                return workspace.getRoles().contains(Role.COMPONENTS_BROWSER);
-            }).collect(Collectors.toList());
+        if (hasWriteRoles(csar.getWorkspace(), getExpectedRolesToPromoteCSAR(csar))) {
+            return getUserWorkspaces().stream()
+                    .filter(workspace -> !workspace.getId().equals(csar.getWorkspace()) && workspace.getRoles().contains(Role.COMPONENTS_BROWSER))
+                    .collect(Collectors.toList());
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    public CSARPromotionImpact getCSARPromotionImpact(Csar csar, String targetWorkSpace) {
+        if (!getPromotionTargets(csar).stream().filter(workspace -> workspace.getId().equals(targetWorkSpace)).findFirst().isPresent()) {
+            // TODO throw proper exception
+            throw new RuntimeException("The csar cannot be moved to the given target");
+        }
+        // Retrieve all transitive dependencies of the promoted CSAR
+        List<Csar> csarDependencies = AlienUtils.safe(csar.getDependencies()).stream()
+                .map(csarDependency -> csarService.get(csarDependency.getName(), csarDependency.getVersion())).collect(Collectors.toList());
+        // Filter out CSARs which are already on the target workspace
+        Map<String, Csar> impactedCSARs = Stream
+                .concat(Stream.of(csar), csarDependencies.stream().filter(csarDependency -> !csarDependency.getWorkspace().equals(targetWorkSpace)))
+                .collect(Collectors.toMap(Csar::getId, element -> element));
+        // Filter out usages that concerns impacted CSARs of the promotion
+        Map<String, List<Usage>> usageMap = impactedCSARs.values().stream()
+                .collect(Collectors.toMap(Csar::getId, impactedCSAR -> csarService.getCsarRelatedResourceList(impactedCSAR).stream()
+                        .filter(usage -> !impactedCSARs.containsKey(usage.getResourceId())).collect(Collectors.toList())));
+        // Filter out csar with no usage found
+        return new CSARPromotionImpact(
+                usageMap.entrySet().stream().filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+                impactedCSARs, hasWriteRoles(targetWorkSpace, getExpectedRolesToPromoteCSAR(csar)));
+    }
+
+    public CSARPromotionImpact getCSARPromotionImpact(String csarName, String csarVersion, String targetWorkSpace) {
+        Csar csar = csarService.getOrFail(csarName, csarVersion);
+        return getCSARPromotionImpact(csar, targetWorkSpace);
+    }
+
+    private void performPromotionImpact(Csar csar, String targetWorkSpace, CSARPromotionImpact impact) {
+        impact.getImpactedCsars().values().forEach(impactedCsar -> {
+            impactedCsar.setWorkspace(targetWorkSpace);
+            csarService.save(impactedCsar);
+            Topology topology = topologyCatalogService.get(csar.getId());
+            if (topology != null) {
+                topology.setWorkspace(targetWorkSpace);
+                topologyServiceCore.save(topology);
+            }
+            AbstractToscaType[] types = typesCatalogService.getArchiveTypes(csar.getName(), csar.getVersion());
+            Arrays.stream(types).forEach(type -> {
+                type.setWorkspace(targetWorkSpace);
+                alienDAO.save(type);
+            });
+        });
+    }
+
+    public void promoteCSAR(String csarName, String csarVersion, String targetWorkSpace) {
+        Csar csar = csarService.getOrFail(csarName, csarVersion);
+        CSARPromotionImpact impact = getCSARPromotionImpact(csar, targetWorkSpace);
+        if (impact.isHasWriteAccessOnTarget()) {
+            performPromotionImpact(csar, targetWorkSpace, impact);
+        } else if (!hasRoles(targetWorkSpace, Collections.singleton(Role.COMPONENTS_BROWSER))) {
+            // TODO throw proper exception
+            throw new RuntimeException("Invalid promotion request to a workspace that the user has no read access");
+        } else {
+            // TODO create promotion request here
+            throw new RuntimeException("To be implemented");
         }
     }
 }
