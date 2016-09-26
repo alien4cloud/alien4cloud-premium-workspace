@@ -1,6 +1,6 @@
 <div class="row" style="margin-top: 10px;">
   <div class="col-md-3">
-    <facet-search-panel search-url="rest/latest/workspaces/csars"
+    <facet-search-panel search-url="rest/latest/workspaces/csars/search"
                         page-size="10"
                         max-page-count="10"
                         filter-prefix="WORKSPACES.CSAR."
@@ -21,7 +21,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr ng-repeat="csarDTO in searchConfig.result.data" name="csar_{{csarDTO.csar.id}}" class="clickable">
+      <tr ng-repeat="csarDTO in searchConfig.result.data" name="csar_{{csarDTO.csar.id}}">
         <td>
           <i class="pull-left media-object fa fa-archive fa-2x"></i>
         </td>

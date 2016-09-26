@@ -3,6 +3,7 @@ package org.alien4cloud.workspace.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import org.alien4cloud.tosca.model.Csar;
 import org.alien4cloud.tosca.model.templates.Topology;
 import org.alien4cloud.tosca.model.types.AbstractToscaType;
 import org.alien4cloud.workspace.model.CSARPromotionImpact;
+import org.alien4cloud.workspace.model.PromotionRequest;
+import org.alien4cloud.workspace.model.PromotionStatus;
 import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.Sets;
 
 import alien4cloud.dao.IGenericSearchDAO;
+import alien4cloud.exception.NotFoundException;
 import alien4cloud.model.common.Usage;
 import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.Role;
@@ -46,6 +50,8 @@ public class WorkspaceService {
     private CsarService csarService;
     @Resource(name = "alien-es-dao")
     private IGenericSearchDAO alienDAO;
+    @Resource(name = "workspace-dao")
+    private IGenericSearchDAO workspaceDAO;
 
     private Workspace getGlobalWorkspace(Workspace globalWorkspace) {
         if (globalWorkspace == null) {
@@ -61,6 +67,11 @@ public class WorkspaceService {
                     Sets.newHashSet(Role.COMPONENTS_BROWSER, Role.COMPONENTS_MANAGER, Role.ARCHITECT));
         }
         return userWorkspace;
+    }
+
+    public boolean isParentWorkspace(String child, String parent) {
+        // TODO for the moment only global is the parent workspace
+        return !Workspace.getScopeFromId(child).equals(Scope.GLOBAL) && Workspace.getScopeFromId(parent).equals(Scope.GLOBAL);
     }
 
     /**
@@ -105,6 +116,11 @@ public class WorkspaceService {
         addIfNotNull(workspaces, globalWorkspace);
         addIfNotNull(workspaces, userWorkspace);
         return workspaces;
+    }
+
+    public boolean hasPromotionPrivilege(PromotionRequest request) {
+        Csar csar = csarService.getOrFail(request.getCsarName(), request.getCsarVersion());
+        return hasWriteRoles(request.getTargetWorkspace(), getExpectedRolesToPromoteCSAR(csar));
     }
 
     private void addIfNotNull(List<Workspace> workspaces, Workspace workspace) {
@@ -154,10 +170,6 @@ public class WorkspaceService {
     }
 
     public CSARPromotionImpact getCSARPromotionImpact(Csar csar, String targetWorkSpace) {
-        if (!getPromotionTargets(csar).stream().filter(workspace -> workspace.getId().equals(targetWorkSpace)).findFirst().isPresent()) {
-            // TODO throw proper exception
-            throw new RuntimeException("The csar cannot be moved to the given target");
-        }
         // Retrieve all transitive dependencies of the promoted CSAR
         List<Csar> csarDependencies = AlienUtils.safe(csar.getDependencies()).stream()
                 .map(csarDependency -> csarService.get(csarDependency.getName(), csarDependency.getVersion())).collect(Collectors.toList());
@@ -166,9 +178,16 @@ public class WorkspaceService {
                 .concat(Stream.of(csar), csarDependencies.stream().filter(csarDependency -> !csarDependency.getWorkspace().equals(targetWorkSpace)))
                 .collect(Collectors.toMap(Csar::getId, element -> element));
         // Filter out usages that concerns impacted CSARs of the promotion
-        Map<String, List<Usage>> usageMap = impactedCSARs.values().stream()
-                .collect(Collectors.toMap(Csar::getId, impactedCSAR -> csarService.getCsarRelatedResourceList(impactedCSAR).stream()
-                        .filter(usage -> !impactedCSARs.containsKey(usage.getResourceId())).collect(Collectors.toList())));
+        Map<String, List<Usage>> usageMap;
+        if (isParentWorkspace(csar.getWorkspace(), targetWorkSpace)) {
+            // Move to the parent workspace then all the CSARs are always available for usage
+            usageMap = Collections.emptyMap();
+        } else {
+            // Else must check the usage to be sure that it's not used
+            usageMap = impactedCSARs.values().stream()
+                    .collect(Collectors.toMap(Csar::getId, impactedCSAR -> csarService.getCsarRelatedResourceList(impactedCSAR).stream()
+                            .filter(usage -> !impactedCSARs.containsKey(usage.getResourceId())).collect(Collectors.toList())));
+        }
         // Filter out csar with no usage found
         return new CSARPromotionImpact(
                 usageMap.entrySet().stream().filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
@@ -198,17 +217,62 @@ public class WorkspaceService {
         });
     }
 
-    public void promoteCSAR(String csarName, String csarVersion, String targetWorkSpace) {
-        Csar csar = csarService.getOrFail(csarName, csarVersion);
-        CSARPromotionImpact impact = getCSARPromotionImpact(csar, targetWorkSpace);
-        if (impact.isHasWriteAccessOnTarget()) {
-            performPromotionImpact(csar, targetWorkSpace, impact);
-        } else if (!hasRoles(targetWorkSpace, Collections.singleton(Role.COMPONENTS_BROWSER))) {
-            // TODO throw proper exception
-            throw new RuntimeException("Invalid promotion request to a workspace that the user has no read access");
+    private void savePromotionRequest(PromotionRequest promotionRequest) {
+        workspaceDAO.save(promotionRequest);
+    }
+
+    public PromotionRequest refuseCSARPromotion(PromotionRequest promotionRequest) {
+        PromotionRequest existingRequest = workspaceDAO.findById(PromotionRequest.class, promotionRequest.getId());
+        if (existingRequest != null) {
+            existingRequest.setProcessDate(new Date());
+            existingRequest.setProcessUser(AuthorizationUtil.getCurrentUser().getUserId());
+            existingRequest.setStatus(PromotionStatus.REFUSED);
+            savePromotionRequest(existingRequest);
+            return existingRequest;
         } else {
-            // TODO create promotion request here
-            throw new RuntimeException("To be implemented");
+            throw new NotFoundException("Promotion request cannot be found [" + promotionRequest.getId() + "]");
+        }
+    }
+
+    public PromotionRequest promoteCSAR(PromotionRequest promotionRequest) {
+        Csar csar = csarService.getOrFail(promotionRequest.getCsarName(), promotionRequest.getCsarVersion());
+        CSARPromotionImpact impact = getCSARPromotionImpact(csar, promotionRequest.getTargetWorkspace());
+        Date currentDate = new Date();
+        String currentUser = AuthorizationUtil.getCurrentUser().getUserId();
+        if (impact.isHasWriteAccessOnTarget()) {
+            // new request and the user manages the target workspace then move immediately
+            performPromotionImpact(csar, promotionRequest.getTargetWorkspace(), impact);
+            promotionRequest.setRequestUser(currentUser);
+            promotionRequest.setRequestDate(currentDate);
+            promotionRequest.setProcessUser(currentUser);
+            promotionRequest.setProcessDate(currentDate);
+            promotionRequest.setStatus(PromotionStatus.ACCEPTED);
+        } else {
+            // Else must save the promotion request so that people who manages the workspace can validate
+            promotionRequest.setRequestUser(currentUser);
+            promotionRequest.setRequestDate(currentDate);
+            promotionRequest.setStatus(PromotionStatus.INIT);
+        }
+        savePromotionRequest(promotionRequest);
+        return promotionRequest;
+    }
+
+    public PromotionRequest acceptCSARPromotion(PromotionRequest promotionRequest) {
+        Csar csar = csarService.getOrFail(promotionRequest.getCsarName(), promotionRequest.getCsarVersion());
+        CSARPromotionImpact impact = getCSARPromotionImpact(csar, promotionRequest.getTargetWorkspace());
+        Date currentDate = new Date();
+        String currentUser = AuthorizationUtil.getCurrentUser().getUserId();
+        PromotionRequest existingRequest = workspaceDAO.findById(PromotionRequest.class, promotionRequest.getId());
+        if (existingRequest != null) {
+            // Accept an existing request
+            performPromotionImpact(csar, existingRequest.getTargetWorkspace(), impact);
+            existingRequest.setProcessUser(currentUser);
+            existingRequest.setProcessDate(currentDate);
+            existingRequest.setStatus(PromotionStatus.ACCEPTED);
+            savePromotionRequest(existingRequest);
+            return existingRequest;
+        } else {
+            throw new NotFoundException("Promotion request cannot be found [" + promotionRequest.getId() + "]");
         }
     }
 }

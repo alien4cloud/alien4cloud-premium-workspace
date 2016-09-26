@@ -4,20 +4,20 @@
   </legend>
 
   <tabset>
-    <tab id="tab-workspace-csar">
+    <tab id="tab-workspace-csar" select="selectWorkspaceTab()">
       <tab-heading>
         <i class="fa fa-archive"></i> {{'WORKSPACES.CSAR.TITLE' | translate}}
       </tab-heading>
-      <div>
+      <div ng-if="workspaceActive">
         <csar-workspace></csar-workspace>
       </div>
     </tab>
-    <tab id="tab-workspace-promotion">
+    <tab id="tab-workspace-promotion" select="selectPromotionTab()">
       <tab-heading>
         <i class="fa fa-forward"></i> {{'WORKSPACES.PROMOTION.TITLE' | translate}}
       </tab-heading>
-      <div>
-        // TODO list / accept / refuse promotions
+      <div ng-if="promotionActive">
+        <csar-promotion></csar-promotion>
       </div>
     </tab>
   </tabset>

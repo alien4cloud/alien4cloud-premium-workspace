@@ -15,4 +15,13 @@ public enum Scope {
     public String toString() {
         return name;
     }
+
+    public static Scope fromName(String name) {
+        for (Scope scope : values()) {
+            if (scope.name.equals(name)) {
+                return scope;
+            }
+        }
+        throw new IllegalArgumentException("Scope with name [" + name + "] do not exist");
+    }
 }

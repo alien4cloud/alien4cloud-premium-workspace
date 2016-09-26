@@ -6,7 +6,7 @@ define(function (require) {
   var states = require('states');
   var _ = require('lodash');
   var prefixer = require('scripts/plugin-url-prefixer');
-  require('scripts/workspace/directives/display_workspace.js');
+  require('scripts/workspace/directives/display_workspace');
 
   // override component list to have the list of workspaces
   // prefixer.prefix('views/workspace/component_list.html')
@@ -19,7 +19,7 @@ define(function (require) {
         return workspaceServices.resource.get().$promise.then(function (response) {
           return response.data;
         });
-      }],
+      }]
     }
   });
 

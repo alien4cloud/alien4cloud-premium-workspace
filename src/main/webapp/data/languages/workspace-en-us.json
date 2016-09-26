@@ -4,17 +4,28 @@
     "UPLOAD": "Upload to workspace",
     "CSAR": {
       "TITLE": "CSARS",
+      "ACTIVE_FILTERS": "Active filters",
       "TEMPLATEAUTHOR": "Author",
       "WORKSPACE": "Workspace"
     },
     "PROMOTION": {
+      "ACTIVE_FILTERS": "Active filters",
       "TITLE": "Promotion",
+      "CSARNAME": "CSAR's name",
+      "CSARVERSION": "CSAR's version",
+      "TARGETWORKSPACE": "Target workspace",
+      "STATUS": "Status",
+      "USER": "User",
+      "ACCEPT": "Accept",
+      "REFUSE": "Refuse",
       "IMPOSSIBLE": "Promotion is not possible as the CSAR or its dependencies are still being used in Alien4Cloud",
       "MOVE": {
-        "TITLE": "Move CSAR to another workspace"
+        "TITLE": "Move CSAR to another workspace",
+        "DONE": "CSAR has been promoted"
       },
       "REQUEST": {
-        "TITLE": "Request for CSAR promotion to another workspace"
+        "TITLE": "Request for CSAR promotion to another workspace",
+        "DONE": "Request for CSAR promotion has been created"
       },
       "IMPACT": {
         "TITLE": "Impacted CSARs by the operation",

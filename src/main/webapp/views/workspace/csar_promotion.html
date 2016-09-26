@@ -1,0 +1,51 @@
+<div class="row" style="margin-top: 10px;">
+  <div class="col-md-3">
+    <facet-search-panel search-url="rest/latest/workspaces/promotions/search"
+                        page-size="10"
+                        max-page-count="10"
+                        filter-prefix="WORKSPACES.PROMOTION."
+                        default-filters="defaultFilters"
+                        on-search="onSearch(searchConfig)">
+    </facet-search-panel>
+  </div>
+  <div class="col-md-9">
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th></th>
+        <th>{{ 'WORKSPACES.PROMOTION.CSARNAME' | translate}}</th>
+        <th>{{ 'WORKSPACES.PROMOTION.CSARVERSION' | translate}}</th>
+        <th>{{ 'WORKSPACES.PROMOTION.TARGETWORKSPACE' | translate}}</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="promotionDTO in searchConfig.result.data" name="promotion_{{promotionDTO.promotionRequest.id}}">
+        <td>
+          <i class="pull-left media-object fa fa-forward fa-2x"></i>
+        </td>
+        <td>{{promotionDTO.promotionRequest.csarName}}</td>
+        <td>{{promotionDTO.promotionRequest.csarVersion}}</td>
+        <td>
+          <display-workspace workspace-id="{{promotionDTO.promotionRequest.targetWorkspace}}"></display-workspace>
+        </td>
+        <td>
+          <button class="btn btn-primary" ng-if="promotionDTO.hasPromotionPrivilege && promotionDTO.promotionRequest.status === 'INIT'"
+                  ng-click="openPromoteModal(promotionDTO.promotionRequest)">{{ 'WORKSPACES.PROMOTION.ACCEPT' | translate}}
+          </button>
+          <button class="btn btn-danger" ng-if="promotionDTO.hasPromotionPrivilege && promotionDTO.promotionRequest.status === 'INIT'"
+                  ng-click="refusePromotion(promotionDTO.promotionRequest)">{{ 'WORKSPACES.PROMOTION.REFUSE' | translate}}
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <empty-place-holder
+        for="'WORKSPACES.PROMOTION.TITLE'"
+        data="searchConfig.result.data">
+    </empty-place-holder>
+
+    <pagination-directive pagination-info="searchConfig.service.pagination"/>
+  </div>
+</div>
