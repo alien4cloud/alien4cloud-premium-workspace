@@ -18,6 +18,10 @@
       "USER": "User",
       "ACCEPT": "Accept",
       "REFUSE": "Refuse",
+      "PROCESSUSER": "Processed by user",
+      "PROCESSDATE": "Process date",
+      "REQUESTUSER": "Requested by user",
+      "REQUESTDATE": "Request date",
       "IMPOSSIBLE": "Promotion is not possible as the CSAR or its dependencies are still being used in Alien4Cloud",
       "MOVE": {
         "TITLE": "Move CSAR to another workspace",

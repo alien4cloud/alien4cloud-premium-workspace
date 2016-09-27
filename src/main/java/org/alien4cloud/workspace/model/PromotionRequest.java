@@ -25,6 +25,10 @@ import lombok.Setter;
 @ESObject
 public class PromotionRequest {
 
+    @Id
+    @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
+    private String id;
+
     @TermsFacet
     @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
     private String requestUser;
@@ -45,7 +49,7 @@ public class PromotionRequest {
 
     @NotNull
     @TermsFacet
-    @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
+    @StringField(indexType = IndexType.not_analyzed)
     private String csarName;
 
     @NotNull
@@ -61,14 +65,4 @@ public class PromotionRequest {
     @TermsFacet
     @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
     private PromotionStatus status;
-
-    @Id
-    @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
-    public String getId() {
-        return getCsarName() + ":" + getCsarVersion() + ":" + getTargetWorkspace();
-    }
-
-    public void setId(String id) {
-        // Ignore
-    }
 }

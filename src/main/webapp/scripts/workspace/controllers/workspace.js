@@ -15,7 +15,7 @@ define(function (require) {
     menu: {
       id: 'cm.components.workspace',
       state: 'components.workspace',
-      key: 'NAVBAR.MENU_WORKSPACE',
+      key: 'WORKSPACES.TITLE',
       icon: 'fa fa-folder-open-o',
       priority: 10
     }

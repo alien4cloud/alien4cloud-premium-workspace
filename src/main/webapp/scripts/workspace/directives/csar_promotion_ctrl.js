@@ -36,9 +36,7 @@ define(function (require) {
         });
         modalInstance.result.then(function () {
           workspaceServices.promotions.save({
-            csarName: promotionRequest.csarName,
-            csarVersion: promotionRequest.csarVersion,
-            targetWorkspace: promotionRequest.targetWorkspace,
+            id: promotionRequest.id,
             status: 'ACCEPTED'
           }, function () {
             $scope.searchConfig.service.search();
@@ -48,9 +46,7 @@ define(function (require) {
 
       $scope.refusePromotion = function (promotionRequest) {
         workspaceServices.promotions.save({
-          csarName: promotionRequest.csarName,
-          csarVersion: promotionRequest.csarVersion,
-          targetWorkspace: promotionRequest.targetWorkspace,
+          id: promotionRequest.id,
           status: 'REFUSED'
         }, function () {
           $scope.searchConfig.service.search();

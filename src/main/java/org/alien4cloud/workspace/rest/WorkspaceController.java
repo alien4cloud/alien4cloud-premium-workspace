@@ -125,7 +125,7 @@ public class WorkspaceController {
                 searchRequest.getFrom(), searchRequest.getSize(), "requestDate", true);
         Object[] enrichedData = Arrays.stream(searchResult.getData()).map(promotionRequestRaw -> {
             PromotionRequest promotionRequest = (PromotionRequest) promotionRequestRaw;
-            return new PromotionDTO(promotionRequest, workspaceService.hasPromotionPrivilege(promotionRequest));
+            return new PromotionDTO(promotionRequest, workspaceService.hasAcceptPromotionPrivilege(promotionRequest));
         }).collect(Collectors.toList()).toArray();
         FacetedSearchResult enrichedSearchResult = new FacetedSearchResult(searchResult.getFrom(), searchResult.getTo(), searchResult.getQueryDuration(),
                 searchResult.getTotalResults(), searchResult.getTypes(), enrichedData, searchResult.getFacets());

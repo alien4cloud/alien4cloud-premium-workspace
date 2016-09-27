@@ -1,15 +1,20 @@
 package org.alien4cloud.workspace.service;
 
-import alien4cloud.common.AlienConstants;
-import alien4cloud.dao.IGenericSearchDAO;
-import alien4cloud.exception.NotFoundException;
-import alien4cloud.model.common.Usage;
-import alien4cloud.security.AuthorizationUtil;
-import alien4cloud.security.model.Role;
-import alien4cloud.security.model.User;
-import alien4cloud.topology.TopologyServiceCore;
-import alien4cloud.utils.AlienUtils;
-import com.google.common.collect.Sets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.Resource;
+import javax.inject.Inject;
+
 import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
@@ -21,20 +26,25 @@ import org.alien4cloud.workspace.model.PromotionRequest;
 import org.alien4cloud.workspace.model.PromotionStatus;
 import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
+import org.elasticsearch.index.query.FilterBuilder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+
+import alien4cloud.common.AlienConstants;
+import alien4cloud.dao.IGenericSearchDAO;
+import alien4cloud.dao.model.FacetedSearchResult;
+import alien4cloud.exception.NotFoundException;
+import alien4cloud.model.application.Application;
+import alien4cloud.model.common.Usage;
+import alien4cloud.security.AuthorizationUtil;
+import alien4cloud.security.model.ApplicationRole;
+import alien4cloud.security.model.Role;
+import alien4cloud.security.model.User;
+import alien4cloud.topology.TopologyServiceCore;
+import alien4cloud.utils.AlienUtils;
 
 @Service
 public class WorkspaceService {
@@ -113,6 +123,20 @@ public class WorkspaceService {
         List<Workspace> workspaces = new ArrayList<>();
         addIfNotNull(workspaces, globalWorkspace);
         addIfNotNull(workspaces, userWorkspace);
+        FilterBuilder authorizationFilter = AuthorizationUtil.getResourceAuthorizationFilters();
+        FacetedSearchResult applicationsSearchResult = alienDAO.facetedSearch(Application.class, null, null, authorizationFilter, null, 0, Integer.MAX_VALUE);
+        if (applicationsSearchResult.getData() != null && applicationsSearchResult.getData().length > 0) {
+            Arrays.stream(applicationsSearchResult.getData()).forEach(applicationRaw -> {
+                Application application = (Application) applicationRaw;
+                if (AuthorizationUtil.hasAuthorizationForApplication(application, ApplicationRole.APPLICATION_DEVOPS)) {
+                    workspaces.add(new Workspace(Scope.APPLICATION, application.getName(),
+                            ImmutableSet.<Role> builder().add(Role.COMPONENTS_BROWSER).add(Role.COMPONENTS_MANAGER).add(Role.ARCHITECT).build()));
+                } else if (AuthorizationUtil.hasAuthorizationForApplication(application, ApplicationRole.APPLICATION_USER)) {
+                    // A deployer must be an application user
+                    workspaces.add(new Workspace(Scope.APPLICATION, application.getName(), ImmutableSet.<Role> builder().add(Role.COMPONENTS_BROWSER).build()));
+                }
+            });
+        }
         return workspaces;
     }
 
@@ -137,9 +161,15 @@ public class WorkspaceService {
         return workspaces;
     }
 
-    public boolean hasPromotionPrivilege(PromotionRequest request) {
+    public boolean hasAcceptPromotionPrivilege(PromotionRequest request) {
         Csar csar = csarService.getOrFail(request.getCsarName(), request.getCsarVersion());
+        // User must have expected roles on the target workspace
         return hasRoles(request.getTargetWorkspace(), getExpectedRolesToPromoteCSAR(csar));
+    }
+
+    private boolean hasPromotionPrivilege(Csar csar) {
+        // User must have expected roles on the csar's workspace
+        return hasRoles(csar.getWorkspace(), getExpectedRolesToPromoteCSAR(csar));
     }
 
     private void addIfNotNull(List<Workspace> workspaces, Workspace workspace) {
@@ -178,7 +208,7 @@ public class WorkspaceService {
      * @return the list of available targets
      */
     public List<Workspace> getPromotionTargets(Csar csar) {
-        if (hasRoles(csar.getWorkspace(), getExpectedRolesToPromoteCSAR(csar))) {
+        if (hasPromotionPrivilege(csar)) {
             return getUserWorkspaces().stream()
                     .filter(workspace -> !workspace.getId().equals(csar.getWorkspace()) && workspace.getRoles().contains(Role.COMPONENTS_BROWSER))
                     .collect(Collectors.toList());
@@ -239,21 +269,12 @@ public class WorkspaceService {
         workspaceDAO.save(promotionRequest);
     }
 
-    public PromotionRequest refuseCSARPromotion(PromotionRequest promotionRequest) {
-        PromotionRequest existingRequest = workspaceDAO.findById(PromotionRequest.class, promotionRequest.getId());
-        if (existingRequest != null) {
-            existingRequest.setProcessDate(new Date());
-            existingRequest.setProcessUser(AuthorizationUtil.getCurrentUser().getUserId());
-            existingRequest.setStatus(PromotionStatus.REFUSED);
-            savePromotionRequest(existingRequest);
-            return existingRequest;
-        } else {
-            throw new NotFoundException("Promotion request cannot be found [" + promotionRequest.getId() + "]");
-        }
-    }
-
     public PromotionRequest promoteCSAR(PromotionRequest promotionRequest) {
         Csar csar = csarService.getOrFail(promotionRequest.getCsarName(), promotionRequest.getCsarVersion());
+        if (!getPromotionTargets(csar).stream().filter(workspace -> workspace.getId().equals(promotionRequest.getTargetWorkspace())).findFirst().isPresent()) {
+            throw new AccessDeniedException("You don't have authorization to promote the CSAR [" + promotionRequest.getCsarName() + ":"
+                    + promotionRequest.getCsarVersion() + "] to [" + promotionRequest.getTargetWorkspace() + "]");
+        }
         CSARPromotionImpact impact = getCSARPromotionImpact(csar, promotionRequest.getTargetWorkspace());
         Date currentDate = new Date();
         String currentUser = AuthorizationUtil.getCurrentUser().getUserId();
@@ -271,17 +292,34 @@ public class WorkspaceService {
             promotionRequest.setRequestDate(currentDate);
             promotionRequest.setStatus(PromotionStatus.INIT);
         }
+        // Generate a technical id
+        promotionRequest.setId(UUID.randomUUID().toString());
         savePromotionRequest(promotionRequest);
         return promotionRequest;
     }
 
-    public PromotionRequest acceptCSARPromotion(PromotionRequest promotionRequest) {
-        Csar csar = csarService.getOrFail(promotionRequest.getCsarName(), promotionRequest.getCsarVersion());
-        CSARPromotionImpact impact = getCSARPromotionImpact(csar, promotionRequest.getTargetWorkspace());
-        Date currentDate = new Date();
-        String currentUser = AuthorizationUtil.getCurrentUser().getUserId();
+    public PromotionRequest refuseCSARPromotion(PromotionRequest promotionRequest) {
         PromotionRequest existingRequest = workspaceDAO.findById(PromotionRequest.class, promotionRequest.getId());
         if (existingRequest != null) {
+            checkAcceptPromotionPrivilege(existingRequest);
+            existingRequest.setProcessDate(new Date());
+            existingRequest.setProcessUser(AuthorizationUtil.getCurrentUser().getUserId());
+            existingRequest.setStatus(PromotionStatus.REFUSED);
+            savePromotionRequest(existingRequest);
+            return existingRequest;
+        } else {
+            throw new NotFoundException("Promotion request cannot be found [" + promotionRequest.getId() + "]");
+        }
+    }
+
+    public PromotionRequest acceptCSARPromotion(PromotionRequest promotionRequest) {
+        PromotionRequest existingRequest = workspaceDAO.findById(PromotionRequest.class, promotionRequest.getId());
+        if (existingRequest != null) {
+            checkAcceptPromotionPrivilege(existingRequest);
+            Csar csar = csarService.getOrFail(existingRequest.getCsarName(), existingRequest.getCsarVersion());
+            CSARPromotionImpact impact = getCSARPromotionImpact(csar, existingRequest.getTargetWorkspace());
+            Date currentDate = new Date();
+            String currentUser = AuthorizationUtil.getCurrentUser().getUserId();
             // Accept an existing request
             performPromotionImpact(csar, existingRequest.getTargetWorkspace(), impact);
             existingRequest.setProcessUser(currentUser);
@@ -291,6 +329,12 @@ public class WorkspaceService {
             return existingRequest;
         } else {
             throw new NotFoundException("Promotion request cannot be found [" + promotionRequest.getId() + "]");
+        }
+    }
+
+    private void checkAcceptPromotionPrivilege(PromotionRequest promotionRequest) {
+        if (!hasAcceptPromotionPrivilege(promotionRequest)) {
+            throw new AccessDeniedException("You don't have authorization to accept/refuse the CSAR's promotion");
         }
     }
 }
