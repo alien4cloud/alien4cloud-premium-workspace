@@ -42,18 +42,16 @@
                       <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_NAME' | translate }}</th>
                       <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_VERSION' | translate }}</th>
                       <th>{{ 'WORKSPACES.PROMOTION.IMPACT.RESOURCE_TYPE' | translate }}</th>
+                      <th>{{ 'WORKSPACES.PROMOTION.IMPACT.WORKSPACE' | translate }}</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat="usage in impact.currentUsages[csarId]">
+                      <td>{{usage.resourceName}}</td>
+                      <td>{{getResourceVersion(usage.resourceId)}}</td>
+                      <td>{{usage.resourceType}}</td>
                       <td>
-                        {{usage.resourceName}}
-                      </td>
-                      <td>
-                        {{getResourceVersion(usage.resourceId)}}
-                      </td>
-                      <td>
-                        {{usage.resourceType}}
+                        <display-workspace workspace-id="{{usage.workspace}}"></display-workspace>
                       </td>
                     </tr>
                     </tbody>

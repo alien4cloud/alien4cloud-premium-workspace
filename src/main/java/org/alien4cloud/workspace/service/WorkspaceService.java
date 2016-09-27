@@ -35,6 +35,7 @@ import com.google.common.collect.Sets;
 
 import alien4cloud.dao.IGenericSearchDAO;
 import alien4cloud.dao.model.FacetedSearchResult;
+import alien4cloud.exception.InvalidArgumentException;
 import alien4cloud.exception.NotFoundException;
 import alien4cloud.model.application.Application;
 import alien4cloud.model.common.Usage;
@@ -214,6 +215,12 @@ public class WorkspaceService {
         }
     }
 
+    private boolean isUsageStillSatisfiedAfterPromotion(Usage resource, String targetWorkSpace) {
+        // If the target workspace is the parent of the workspace of the resource that requires the CSAR, then the resource can still use the CSAR
+        return resource.getWorkspace() == null || targetWorkSpace.equals(resource.getWorkspace())
+                || isParentWorkspace(resource.getWorkspace(), targetWorkSpace);
+    }
+
     public CSARPromotionImpact getCSARPromotionImpact(Csar csar, String targetWorkSpace) {
         // Retrieve all transitive dependencies of the promoted CSAR
         List<Csar> csarDependencies = AlienUtils.safe(csar.getDependencies()).stream()
@@ -226,16 +233,11 @@ public class WorkspaceService {
                 // Target workspace is the workspace of the CSAR then do not try to move it
                 .filter(csarToMove -> !csarToMove.getWorkspace().equals(targetWorkSpace)).collect(Collectors.toMap(Csar::getId, element -> element));
         // Filter out usages that concerns impacted CSARs of the promotion
-        Map<String, List<Usage>> usageMap;
-        if (isParentWorkspace(csar.getWorkspace(), targetWorkSpace)) {
-            // Move to the parent workspace then all the CSARs are always available for usage
-            usageMap = Collections.emptyMap();
-        } else {
-            // Else must check the usage to be sure that it's not used
-            usageMap = impactedCSARs.values().stream()
-                    .collect(Collectors.toMap(Csar::getId, impactedCSAR -> csarService.getCsarRelatedResourceList(impactedCSAR).stream()
-                            .filter(usage -> !impactedCSARs.containsKey(usage.getResourceId())).collect(Collectors.toList())));
-        }
+        Map<String, List<Usage>> usageMap = impactedCSARs.values().stream()
+                .collect(Collectors.toMap(Csar::getId, impactedCSAR -> csarService.getCsarRelatedResourceList(impactedCSAR).stream()
+                        // Filter out usages between the moved CSARs and usages that are still satisfied after the promotion
+                        .filter(usage -> !impactedCSARs.containsKey(usage.getResourceId()) && !isUsageStillSatisfiedAfterPromotion(usage, targetWorkSpace))
+                        .collect(Collectors.toList())));
         // Filter out csar with no usage found
         return new CSARPromotionImpact(
                 usageMap.entrySet().stream().filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
@@ -276,6 +278,9 @@ public class WorkspaceService {
                     + promotionRequest.getCsarVersion() + "] to [" + promotionRequest.getTargetWorkspace() + "]");
         }
         CSARPromotionImpact impact = getCSARPromotionImpact(csar, promotionRequest.getTargetWorkspace());
+        if (!impact.getCurrentUsages().isEmpty()) {
+            throw new InvalidArgumentException("The CSAR is still being used and cannot be promoted");
+        }
         Date currentDate = new Date();
         String currentUser = AuthorizationUtil.getCurrentUser().getUserId();
         if (impact.isHasWriteAccessOnTarget()) {

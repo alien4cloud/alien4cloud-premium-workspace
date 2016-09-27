@@ -33,6 +33,7 @@
       },
       "IMPACT": {
         "TITLE": "Impacted CSARs by the operation",
+        "WORKSPACE": "Workspace",
         "RESOURCE_NAME": "Name",
         "RESOURCE_TYPE": "Type",
         "RESOURCE_VERSION": "Version",
