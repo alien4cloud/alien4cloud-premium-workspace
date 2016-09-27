@@ -1,5 +1,5 @@
 <div>
-  <div id="upload-csar" class="row" ng-if="workspacesForUpload.length > 0">
+  <div id="upload-csar" class="row" ng-if="writeWorkspaces.length > 0">
     <div class="col-md-3">
       <div class="well">
         <div>{{'WORKSPACES.UPLOAD' | translate}}</div>
@@ -9,7 +9,7 @@
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu" style="z-index: 2000;">
-            <li ng-repeat="workspace in workspacesForUpload"
+            <li ng-repeat="workspace in writeWorkspaces"
                 ng-if="workspace !== selectedWorkspaceForUpload"
                 class="option-selected"
                 style="z-index: 2000;">

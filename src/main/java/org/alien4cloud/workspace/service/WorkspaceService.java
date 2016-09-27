@@ -105,12 +105,23 @@ public class WorkspaceService {
         return workspaces;
     }
 
-    public Set<String> getUserWorkspaceIds() {
+    /**
+     * Get the ids of the user workspaces (excluding application workspaces).
+     *
+     * @param writeAccessOnly If true we should only provide workspaces with write access.
+     * @return A set of workspaces ids that the user can access.
+     */
+    public Set<String> getUserWorkspaceIds(boolean writeAccessOnly) {
         Set<String> workspaces = Sets.newHashSet();
         User currentUser = AuthorizationUtil.getCurrentUser();
         if (AuthorizationUtil.hasOneRoleIn(Role.ARCHITECT, Role.COMPONENTS_MANAGER)) {
             workspaces.add(AlienConstants.GLOBAL_WORKSPACE_ID);
-            workspaces.add(Scope.USER.name() + currentUser.getUserId());
+            workspaces.add(Scope.USER + ":" + currentUser.getUserId());
+        } else if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_BROWSER)) {
+            if (!writeAccessOnly) { // read user can have access to global workspace with a component browser role.
+                workspaces.add(AlienConstants.GLOBAL_WORKSPACE_ID);
+            }
+            workspaces.add(Scope.USER + ":" + currentUser.getUserId());
         }
         return workspaces;
     }
@@ -121,17 +132,16 @@ public class WorkspaceService {
         }
     }
 
-    private boolean hasRoles(String workspaceId, Set<Role> expectedRoles) {
+    /**
+     * Check if a user has a role in the specified workspace.
+     *
+     * @param workspaceId The if of the workspace for which to check roles.
+     * @param expectedRoles The sets of expected roles, all roles must be matched.
+     * @return
+     */
+    public boolean hasRoles(String workspaceId, Set<Role> expectedRoles) {
         return getUserWorkspaces().stream().filter(workspace -> workspace.getId().equals(workspaceId) && workspace.getRoles().containsAll(expectedRoles))
                 .findFirst().isPresent();
-    }
-
-    private boolean hasWriteRoles(String workspaceId, Set<Role> expectedRoles) {
-        if (expectedRoles.isEmpty()) {
-            // either component manager or architect
-            return hasRoles(workspaceId, Collections.singleton(Role.COMPONENTS_MANAGER)) || hasRoles(workspaceId, Collections.singleton(Role.ARCHITECT));
-        }
-        return hasRoles(workspaceId, expectedRoles);
     }
 
     private Set<Role> getExpectedRolesToPromoteCSAR(Csar csar) {
@@ -152,7 +162,7 @@ public class WorkspaceService {
      * @return the list of available targets
      */
     public List<Workspace> getPromotionTargets(Csar csar) {
-        if (hasWriteRoles(csar.getWorkspace(), getExpectedRolesToPromoteCSAR(csar))) {
+        if (hasRoles(csar.getWorkspace(), getExpectedRolesToPromoteCSAR(csar))) {
             return getUserWorkspaces().stream()
                     .filter(workspace -> !workspace.getId().equals(csar.getWorkspace()) && workspace.getRoles().contains(Role.COMPONENTS_BROWSER))
                     .collect(Collectors.toList());
@@ -181,7 +191,7 @@ public class WorkspaceService {
         return new CSARPromotionImpact(
                 usageMap.entrySet().stream().filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
-                impactedCSARs, hasWriteRoles(targetWorkSpace, getExpectedRolesToPromoteCSAR(csar)));
+                impactedCSARs, hasRoles(targetWorkSpace, getExpectedRolesToPromoteCSAR(csar)));
     }
 
     public CSARPromotionImpact getCSARPromotionImpact(String csarName, String csarVersion, String targetWorkSpace) {

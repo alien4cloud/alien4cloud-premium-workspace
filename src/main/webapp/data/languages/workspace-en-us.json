@@ -1,7 +1,7 @@
 {
   "WORKSPACES": {
     "TITLE": "Workspace",
-    "UPLOAD": "Upload to workspace",
+    "UPLOAD": "Target workspace",
     "CSAR": {
       "TITLE": "CSARS",
       "TEMPLATEAUTHOR": "Author",
@@ -26,9 +26,9 @@
       }
     },
     "SCOPE": {
-      "USER": "User Workspace",
-      "APP": "Application Workspace",
-      "ALIEN_GLOBAL_WORKSPACE": "Global Workspace"
+      "USER": "User workspace",
+      "APP": "Application workspace",
+      "ALIEN_GLOBAL_WORKSPACE": "Global workspace"
     }
   }
 }

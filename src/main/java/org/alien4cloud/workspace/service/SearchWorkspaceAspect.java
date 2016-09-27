@@ -1,17 +1,15 @@
 package org.alien4cloud.workspace.service;
 
-import java.util.Map;
-import java.util.Set;
-
-import javax.inject.Inject;
-
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Aspect that ensure the search filters respect the user workspaces.
@@ -22,16 +20,20 @@ public class SearchWorkspaceAspect {
     @Inject
     private WorkspaceService workspaceService;
 
-    @Pointcut("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService+.search(..))")
-    public void buildPointCut() {
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService+.search(..))")
+    public Object ensureTypeContext(ProceedingJoinPoint joinPoint) throws Throwable {
+        return doEnsureContext(joinPoint);
     }
 
-    // @Around("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService.search(..))")
-    @Around("buildPointCut()")
-    public Object ensureContext(ProceedingJoinPoint joinPoint) throws Throwable {
-        Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[4];
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.search(..))")
+    public Object ensureTopologyContext(ProceedingJoinPoint joinPoint) throws Throwable {
+        return doEnsureContext(joinPoint);
+    }
+
+    private Object doEnsureContext(ProceedingJoinPoint joinPoint) throws Throwable {
+        Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[3];
         String[] workspaces = filters.get("workspace");
-        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds();
+        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(false);
         if (workspaces == null) {
             // inject all user workspaces
             String[] workspaceIds = userWorkspaces.toArray(new String[userWorkspaces.size()]);
@@ -47,4 +49,18 @@ public class SearchWorkspaceAspect {
         }
         return joinPoint.proceed();
     }
+
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.getAll(..))")
+    public Object getAllMyWorkspaces(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Add workspaces filter on all workspaces with a write access.
+        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(true);
+        Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[0];
+        // add the workspaces
+        filters.put("workspace", userWorkspaces.toArray(new String[userWorkspaces.size()]));
+        return joinPoint.proceed();
+    }
+
+    // ITopologyCatalogService.getAll
+    // ITopologyCatalogService.get (should look at the result and check workspace)
+    // ITopologyCatalogService.getOrFail (should look at the result and check workspace)
 }

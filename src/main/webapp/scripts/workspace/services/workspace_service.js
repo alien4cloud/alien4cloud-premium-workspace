@@ -13,7 +13,7 @@ define(function (require) {
         var result = {
           writeWorkspaces: [],
           staticFacets: {},
-          defaultWorkspaces: []
+          readWorkspaces: []
         };
         _.each(workspaces, function (workspace) {
           if (_.includes(workspace.roles, writeRole)) {
@@ -24,9 +24,12 @@ define(function (require) {
               result.staticFacets.workspace = [];
             }
             result.staticFacets.workspace.push({facetValue: workspace.id, count: ''});
-            result.defaultWorkspaces.push(workspace.id);
+            result.readWorkspaces.push(workspace.id);
           }
         });
+        if(_.defined(result.staticFacets.workspace)) {
+          result.staticFacets.workspace[0].staticFilter = result.readWorkspaces;
+        }
         return result;
       }
 

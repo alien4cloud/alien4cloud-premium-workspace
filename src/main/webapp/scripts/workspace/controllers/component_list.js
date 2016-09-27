@@ -4,7 +4,6 @@ define(function (require) {
 
   var modules = require('modules');
   var states = require('states');
-  var _ = require('lodash');
   var prefixer = require('scripts/plugin-url-prefixer');
   require('scripts/workspace/directives/display_workspace.js');
 
@@ -28,9 +27,9 @@ define(function (require) {
 
       var processedWorkspaces = workspaceServices.process(workspaces, 'COMPONENTS_MANAGER');
       $scope.staticFacets = processedWorkspaces.staticFacets;
-      $scope.workspacesForUpload = processedWorkspaces.writeWorkspaces;
-      if(processedWorkspaces.defaultWorkspaces.length > 0) {
-        $scope.defaultFilters.workspace =  processedWorkspaces.defaultWorkspaces;
+      $scope.writeWorkspaces = processedWorkspaces.writeWorkspaces;
+      if(processedWorkspaces.readWorkspaces.length > 0) {
+        $scope.defaultFilters.workspace =  processedWorkspaces.readWorkspaces;
       }
 
       $scope.selectWorkspaceForUpload = function (workspace) {
@@ -39,8 +38,8 @@ define(function (require) {
           workspace: $scope.selectedWorkspaceForUpload.id
         };
       };
-      if($scope.workspacesForUpload.length>0) {
-        $scope.selectWorkspaceForUpload($scope.workspacesForUpload[0]);
+      if($scope.writeWorkspaces.length>0) {
+        $scope.selectWorkspaceForUpload($scope.writeWorkspaces[0]);
       }
     }
   ]);

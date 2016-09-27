@@ -1,5 +1,34 @@
 {
   "WORKSPACES": {
-    "UPLOAD": "Upload to workspace"
+    "TITLE": "Workspace",
+    "UPLOAD": "Target workspace",
+    "CSAR": {
+      "TITLE": "CSARS",
+      "TEMPLATEAUTHOR": "Author",
+      "WORKSPACE": "Workspace"
+    },
+    "PROMOTION": {
+      "TITLE": "Promotion",
+      "IMPOSSIBLE": "Promotion is not possible as the CSAR or its dependencies are still being used in Alien4Cloud",
+      "MOVE": {
+        "TITLE": "Move CSAR to another workspace"
+      },
+      "REQUEST": {
+        "TITLE": "Request for CSAR promotion to another workspace"
+      },
+      "IMPACT": {
+        "TITLE": "Impacted CSARs by the operation",
+        "RESOURCE_NAME": "Name",
+        "RESOURCE_TYPE": "Type",
+        "RESOURCE_VERSION": "Version",
+        "NOT_USED": "This CSAR is not used and can be moved",
+        "USED": "This CSAR is used and cannot be moved, list of dependencies:"
+      }
+    },
+    "SCOPE": {
+      "USER": "User workspace",
+      "APP": "Application workspace",
+      "ALIEN_GLOBAL_WORKSPACE": "Global workspace"
+    }
   }
 }
