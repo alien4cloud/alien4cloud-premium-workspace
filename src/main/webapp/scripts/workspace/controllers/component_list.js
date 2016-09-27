@@ -5,7 +5,7 @@ define(function (require) {
   var modules = require('modules');
   var states = require('states');
   var prefixer = require('scripts/plugin-url-prefixer');
-  require('scripts/workspace/directives/display_workspace.js');
+  require('scripts/workspace/directives/display_workspace');
 
   // override component list to have the list of workspaces
   states.merge('components.list', {

@@ -4,7 +4,8 @@ define(function (require) {
   var states = require('states');
   var modules = require('modules');
   var _ = require('lodash');
-  require('scripts/workspace/directives/csar_workspace.js');
+  require('scripts/workspace/directives/csar_workspace');
+  require('scripts/workspace/directives/csar_promotion');
 
   // register plugin state
   states.state('components.workspace', {
@@ -20,8 +21,20 @@ define(function (require) {
     }
   });
 
-  modules.get('alien4cloud-premium-workspace', []).controller('WorkspaceController', [
-    function () {
+  modules.get('alien4cloud-premium-workspace', []).controller('WorkspaceController', ['$scope',
+    function ($scope) {
+
+      $scope.selectWorkspaceTab = function () {
+        $scope.workspaceActive = true;
+        $scope.promotionActive = false;
+      };
+
+      $scope.selectPromotionTab = function () {
+        $scope.workspaceActive = false;
+        $scope.promotionActive = true;
+      };
+
+      $scope.selectWorkspaceTab();
     }
   ]);
 });

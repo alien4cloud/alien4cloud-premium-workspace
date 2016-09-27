@@ -3,7 +3,7 @@
     <div class="col-md-3">
       <div class="well">
         <div>{{'WORKSPACES.UPLOAD' | translate}}</div>
-        <div class="dropdown">
+        <div ng-if="workspacesForUpload.length > 1" class="dropdown">
           <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
             <display-workspace workspace-id="{{selectedWorkspaceForUpload.id}}"></display-workspace>
             <span class="caret"></span>
@@ -19,6 +19,7 @@
             </li>
           </ul>
         </div>
+        <display-workspace  ng-if="workspacesForUpload.length == 1" workspace-id="{{selectedWorkspaceForUpload.id}}"></display-workspace>
       </div>
     </div>
     <div class="col-md-9">

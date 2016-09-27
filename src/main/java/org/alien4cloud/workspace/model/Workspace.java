@@ -29,4 +29,13 @@ public class Workspace {
     public String getId() {
         return scope + (name != null ? (":" + name) : "");
     }
+
+    public static Scope getScopeFromId(String id) {
+        int sepIndex = id.indexOf(':');
+        if (sepIndex >= 0) {
+            return Scope.fromName(id.substring(0, sepIndex));
+        } else {
+            return Scope.fromName(id);
+        }
+    }
 }

@@ -4,11 +4,14 @@ define(function (require) {
   var modules = require('modules');
   var _ = require('lodash');
 
-  modules.get('alien4cloud-premium-workspace', ['ngResource']).factory('workspaceServices', ['$alresource', function ($alresource) {
+  modules.get('alien4cloud-premium-workspace', ['ngResource']).factory('workspaceServices', ['$alresource', '$modal', function ($alresource, $modal) {
+    var resource = $alresource('rest/latest/workspaces');
+    var promotionImpact = $alresource('rest/latest/workspaces/promotion-impact');
+    var promotions = $alresource('rest/latest/workspaces/promotions');
     return {
-      resource: $alresource('rest/latest/workspaces'),
-      promotionImpact: $alresource('rest/latest/workspaces/promotion-impact'),
-      promotions: $alresource('rest/latest/workspaces/promotions'),
+      resource: resource,
+      promotionImpact: promotionImpact,
+      promotions: promotions,
       process: function (workspaces, writeRole) {
         var result = {
           writeWorkspaces: [],
@@ -32,7 +35,6 @@ define(function (require) {
         }
         return result;
       }
-
     };
   }]);
 });

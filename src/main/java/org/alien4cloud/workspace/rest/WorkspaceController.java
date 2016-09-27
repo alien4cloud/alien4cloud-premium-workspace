@@ -11,7 +11,9 @@ import javax.inject.Inject;
 import org.alien4cloud.tosca.model.Csar;
 import org.alien4cloud.workspace.model.CSARPromotionImpact;
 import org.alien4cloud.workspace.model.CSARWorkspaceDTO;
+import org.alien4cloud.workspace.model.PromotionDTO;
 import org.alien4cloud.workspace.model.PromotionRequest;
+import org.alien4cloud.workspace.model.PromotionStatus;
 import org.alien4cloud.workspace.model.Workspace;
 import org.alien4cloud.workspace.service.WorkspaceService;
 import org.elasticsearch.common.collect.Maps;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import alien4cloud.dao.IGenericSearchDAO;
 import alien4cloud.dao.model.FacetedSearchResult;
+import alien4cloud.exception.InvalidArgumentException;
 import alien4cloud.rest.component.SearchRequest;
 import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
@@ -43,6 +46,8 @@ public class WorkspaceController {
     private WorkspaceService workspaceService;
     @Resource(name = "alien-es-dao")
     private IGenericSearchDAO dao;
+    @Resource(name = "workspace-dao")
+    private IGenericSearchDAO workspaceDAO;
 
     @ApiOperation(value = "Get workspaces that the current user has the right to upload to", authorizations = { @Authorization("COMPONENTS_BROWSER"),
             @Authorization("COMPONENTS_MANAGER"), @Authorization("ARCHITECT") })
@@ -54,13 +59,15 @@ public class WorkspaceController {
 
     @ApiOperation(value = "Search for csars with workspaces information", authorizations = { @Authorization("COMPONENTS_BROWSER"),
             @Authorization("COMPONENTS_MANAGER"), @Authorization("ARCHITECT") })
-    @RequestMapping(value = "csars", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "csars/search", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
     public RestResponse<FacetedSearchResult> searchCSARs(@RequestBody SearchRequest searchRequest) {
         Map<String, String[]> filters = searchRequest.getFilters();
         if (filters == null) {
             filters = Maps.newHashMap();
         }
+        List<String> userWorkspaces = workspaceService.getUserWorkspaces().stream().map(Workspace::getId).collect(Collectors.toList());
+        filters.put("workspace", userWorkspaces.toArray(new String[userWorkspaces.size()]));
         FacetedSearchResult searchResult = dao.facetedSearch(Csar.class, searchRequest.getQuery(), filters, null, searchRequest.getFrom(),
                 searchRequest.getSize());
         Object[] enrichedData = Arrays.stream(searchResult.getData())
@@ -81,13 +88,48 @@ public class WorkspaceController {
                 .build();
     }
 
-    @ApiOperation(value = "Perform the promotion", authorizations = { @Authorization("COMPONENTS_BROWSER"), @Authorization("COMPONENTS_MANAGER"),
+    @ApiOperation(value = "Perform or accept the promotion", authorizations = { @Authorization("COMPONENTS_BROWSER"), @Authorization("COMPONENTS_MANAGER"),
             @Authorization("ARCHITECT") })
-    @RequestMapping(value = "promotions", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "promotions", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
-    public RestResponse<Void> performPromotion(@RequestBody PromotionRequest promotionRequest) {
-        // TODO may return promotion request's id that is created if the user does not have write access on the target workspace
-        workspaceService.promoteCSAR(promotionRequest.getCsarName(), promotionRequest.getCsarVersion(), promotionRequest.getTargetWorkspace());
-        return RestResponseBuilder.<Void> builder().build();
+    public RestResponse<PromotionRequest> performPromotion(@RequestBody PromotionRequest promotionRequest) {
+        PromotionStatus status = promotionRequest.getStatus();
+        if (status == null) {
+            status = PromotionStatus.INIT;
+            promotionRequest.setStatus(status);
+        }
+        switch (status) {
+        case REFUSED:
+            return RestResponseBuilder.<PromotionRequest> builder().data(workspaceService.refuseCSARPromotion(promotionRequest)).build();
+        case INIT:
+            return RestResponseBuilder.<PromotionRequest> builder().data(workspaceService.promoteCSAR(promotionRequest)).build();
+        case ACCEPTED:
+            return RestResponseBuilder.<PromotionRequest> builder().data(workspaceService.acceptCSARPromotion(promotionRequest)).build();
+        default:
+            throw new InvalidArgumentException("Unrecognized status for promotion request [" + promotionRequest.getStatus() + "]");
+        }
     }
+
+    @ApiOperation(value = "Search for promotion", authorizations = { @Authorization("COMPONENTS_BROWSER"), @Authorization("COMPONENTS_MANAGER"),
+            @Authorization("ARCHITECT") })
+    @RequestMapping(value = "promotions/search", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
+    public RestResponse<FacetedSearchResult> listPromotion(@RequestBody SearchRequest searchRequest) {
+        Map<String, String[]> filters = searchRequest.getFilters();
+        if (filters == null) {
+            filters = Maps.newHashMap();
+        }
+        List<String> userWorkspaces = workspaceService.getUserWorkspaces().stream().map(Workspace::getId).collect(Collectors.toList());
+        filters.put("targetWorkspace", userWorkspaces.toArray(new String[userWorkspaces.size()]));
+        FacetedSearchResult searchResult = workspaceDAO.facetedSearch(PromotionRequest.class, searchRequest.getQuery(), filters, null, null,
+                searchRequest.getFrom(), searchRequest.getSize(), "requestDate", true);
+        Object[] enrichedData = Arrays.stream(searchResult.getData()).map(promotionRequestRaw -> {
+            PromotionRequest promotionRequest = (PromotionRequest) promotionRequestRaw;
+            return new PromotionDTO(promotionRequest, workspaceService.hasPromotionPrivilege(promotionRequest));
+        }).collect(Collectors.toList()).toArray();
+        FacetedSearchResult enrichedSearchResult = new FacetedSearchResult(searchResult.getFrom(), searchResult.getTo(), searchResult.getQueryDuration(),
+                searchResult.getTotalResults(), searchResult.getTypes(), enrichedData, searchResult.getFacets());
+        return RestResponseBuilder.<FacetedSearchResult> builder().data(enrichedSearchResult).build();
+    }
+
 }
