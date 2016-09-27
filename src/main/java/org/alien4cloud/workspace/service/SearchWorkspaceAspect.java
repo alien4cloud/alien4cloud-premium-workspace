@@ -1,5 +1,6 @@
 package org.alien4cloud.workspace.service;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +38,6 @@ public class SearchWorkspaceAspect {
         if (archiveRoot.hasToscaTypes()) {
             workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER));
         }
-        return;
     }
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService+.search(..))")
@@ -53,7 +53,7 @@ public class SearchWorkspaceAspect {
     private Object doEnsureContext(ProceedingJoinPoint joinPoint) throws Throwable {
         Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[3];
         String[] workspaces = filters.get("workspace");
-        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(false);
+        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER));
         if (workspaces == null) {
             // inject all user workspaces
             String[] workspaceIds = userWorkspaces.toArray(new String[userWorkspaces.size()]);
@@ -73,7 +73,7 @@ public class SearchWorkspaceAspect {
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.getAll(..))")
     public Object getAllMyWorkspaces(ProceedingJoinPoint joinPoint) throws Throwable {
         // Add workspaces filter on all workspaces with a write access.
-        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(true);
+        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER));
         Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[0];
         // add the workspaces
         filters.put("workspace", userWorkspaces.toArray(new String[userWorkspaces.size()]));

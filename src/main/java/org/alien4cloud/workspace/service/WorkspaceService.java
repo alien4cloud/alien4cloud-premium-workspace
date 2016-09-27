@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-import alien4cloud.common.AlienConstants;
 import alien4cloud.dao.IGenericSearchDAO;
 import alien4cloud.dao.model.FacetedSearchResult;
 import alien4cloud.exception.NotFoundException;
@@ -108,11 +107,13 @@ public class WorkspaceService {
         if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_MANAGER)) {
             globalWorkspace = getGlobalWorkspace(globalWorkspace);
             globalWorkspace.getRoles().add(Role.COMPONENTS_MANAGER);
+            globalWorkspace.getRoles().add(Role.COMPONENTS_BROWSER);
             userWorkspace = getUserWorkspace(userWorkspace, currentUser);
         }
         if (AuthorizationUtil.hasOneRoleIn(Role.ARCHITECT)) {
             globalWorkspace = getGlobalWorkspace(globalWorkspace);
             globalWorkspace.getRoles().add(Role.ARCHITECT);
+            globalWorkspace.getRoles().add(Role.COMPONENTS_BROWSER);
             userWorkspace = getUserWorkspace(userWorkspace, currentUser);
         }
         if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_BROWSER)) {
@@ -123,6 +124,12 @@ public class WorkspaceService {
         List<Workspace> workspaces = new ArrayList<>();
         addIfNotNull(workspaces, globalWorkspace);
         addIfNotNull(workspaces, userWorkspace);
+        workspaces.addAll(getUserApplicationWorkspaces());
+        return workspaces;
+    }
+
+    private List<Workspace> getUserApplicationWorkspaces() {
+        List<Workspace> workspaces = new ArrayList<>();
         FilterBuilder authorizationFilter = AuthorizationUtil.getResourceAuthorizationFilters();
         FacetedSearchResult applicationsSearchResult = alienDAO.facetedSearch(Application.class, null, null, authorizationFilter, null, 0, Integer.MAX_VALUE);
         if (applicationsSearchResult.getData() != null && applicationsSearchResult.getData().length > 0) {
@@ -141,24 +148,14 @@ public class WorkspaceService {
     }
 
     /**
-     * Get the ids of the user workspaces (excluding application workspaces).
+     * Get the ids of the user workspaces.
      *
-     * @param writeAccessOnly If true we should only provide workspaces with write access.
+     * @param expectedRoles If set we should only provide workspaces with the expected roles.
      * @return A set of workspaces ids that the user can access.
      */
-    public Set<String> getUserWorkspaceIds(boolean writeAccessOnly) {
-        Set<String> workspaces = Sets.newHashSet();
-        User currentUser = AuthorizationUtil.getCurrentUser();
-        if (AuthorizationUtil.hasOneRoleIn(Role.ARCHITECT, Role.COMPONENTS_MANAGER)) {
-            workspaces.add(AlienConstants.GLOBAL_WORKSPACE_ID);
-            workspaces.add(Scope.USER + ":" + currentUser.getUserId());
-        } else if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_BROWSER)) {
-            if (!writeAccessOnly) { // read user can have access to global workspace with a component browser role.
-                workspaces.add(AlienConstants.GLOBAL_WORKSPACE_ID);
-            }
-            workspaces.add(Scope.USER + ":" + currentUser.getUserId());
-        }
-        return workspaces;
+    public Set<String> getUserWorkspaceIds(Set<Role> expectedRoles) {
+        return getUserWorkspaces().stream().filter(workspace -> expectedRoles == null || workspace.getRoles().containsAll(expectedRoles)).map(Workspace::getId)
+                .collect(Collectors.toSet());
     }
 
     public boolean hasAcceptPromotionPrivilege(PromotionRequest request) {
@@ -223,8 +220,11 @@ public class WorkspaceService {
                 .map(csarDependency -> csarService.get(csarDependency.getName(), csarDependency.getVersion())).collect(Collectors.toList());
         // Filter out CSARs which are already on the target workspace
         Map<String, Csar> impactedCSARs = Stream
-                .concat(Stream.of(csar), csarDependencies.stream().filter(csarDependency -> !csarDependency.getWorkspace().equals(targetWorkSpace)))
-                .collect(Collectors.toMap(Csar::getId, element -> element));
+                // Target workspace is the child of the dependency's workspace then do not try to move the dependency
+                // The reason is because, the dependency is still visible to the promoted CSAR once moved to the target workspace
+                .concat(Stream.of(csar), csarDependencies.stream().filter(csarToMove -> !isParentWorkspace(targetWorkSpace, csarToMove.getWorkspace())))
+                // Target workspace is the workspace of the CSAR then do not try to move it
+                .filter(csarToMove -> !csarToMove.getWorkspace().equals(targetWorkSpace)).collect(Collectors.toMap(Csar::getId, element -> element));
         // Filter out usages that concerns impacted CSARs of the promotion
         Map<String, List<Usage>> usageMap;
         if (isParentWorkspace(csar.getWorkspace(), targetWorkSpace)) {
