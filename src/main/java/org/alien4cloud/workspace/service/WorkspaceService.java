@@ -1,19 +1,15 @@
 package org.alien4cloud.workspace.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Resource;
-import javax.inject.Inject;
-
+import alien4cloud.common.AlienConstants;
+import alien4cloud.dao.IGenericSearchDAO;
+import alien4cloud.exception.NotFoundException;
+import alien4cloud.model.common.Usage;
+import alien4cloud.security.AuthorizationUtil;
+import alien4cloud.security.model.Role;
+import alien4cloud.security.model.User;
+import alien4cloud.topology.TopologyServiceCore;
+import alien4cloud.utils.AlienUtils;
+import com.google.common.collect.Sets;
 import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
@@ -27,17 +23,18 @@ import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.springframework.stereotype.Service;
 
-import com.google.common.collect.Sets;
-
-import alien4cloud.common.AlienConstants;
-import alien4cloud.dao.IGenericSearchDAO;
-import alien4cloud.exception.NotFoundException;
-import alien4cloud.model.common.Usage;
-import alien4cloud.security.AuthorizationUtil;
-import alien4cloud.security.model.Role;
-import alien4cloud.security.model.User;
-import alien4cloud.topology.TopologyServiceCore;
-import alien4cloud.utils.AlienUtils;
+import javax.annotation.Resource;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class WorkspaceService {

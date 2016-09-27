@@ -7,8 +7,8 @@ define(function (require) {
   var _ = require('lodash');
   var angular = require('angular');
   var prefixer = require('scripts/plugin-url-prefixer');
-  require('scripts/workspace/directives/display_workspace.js');
-  require('scripts/workspace/controllers/editor_register.js');
+  require('scripts/workspace/directives/display_workspace');
+  require('scripts/workspace/controllers/editor_register');
 
   // override component list to have the list of workspaces
   // prefixer.prefix('views/workspace/component_list.html')
