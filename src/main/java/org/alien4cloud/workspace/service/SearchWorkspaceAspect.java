@@ -1,5 +1,10 @@
 package org.alien4cloud.workspace.service;
 
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -7,9 +12,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.Sets;
+
+import alien4cloud.security.model.Role;
+import alien4cloud.tosca.model.ArchiveRoot;
 
 /**
  * Aspect that ensure the search filters respect the user workspaces.
@@ -19,6 +25,20 @@ import java.util.Set;
 public class SearchWorkspaceAspect {
     @Inject
     private WorkspaceService workspaceService;
+
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.checkAuthorization(..))")
+    public void onCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
+        // we just override the basic security and mange it here
+        ArchiveRoot archiveRoot = (ArchiveRoot) joinPoint.getArgs()[0];
+        String workspace = archiveRoot.getArchive().getWorkspace();
+        if (archiveRoot.hasToscaTopologyTemplate()) {
+            workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT));
+        }
+        if (archiveRoot.hasToscaTypes()) {
+            workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER));
+        }
+        return;
+    }
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService+.search(..))")
     public Object ensureTypeContext(ProceedingJoinPoint joinPoint) throws Throwable {
