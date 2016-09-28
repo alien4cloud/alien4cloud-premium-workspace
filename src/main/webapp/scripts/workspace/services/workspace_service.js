@@ -30,9 +30,9 @@ define(function (require) {
             result.readWorkspaces.push(workspace.id);
           }
         });
-        if(_.defined(result.staticFacets.workspace)) {
-          result.staticFacets.workspace[0].staticFilter = result.readWorkspaces;
-        }
+        // if(_.defined(result.staticFacets.workspace)) {
+        //   result.staticFacets.workspace[0].staticFilter = result.readWorkspaces;
+        // }
         return result;
       }
     };

@@ -28,9 +28,6 @@ define(function (require) {
       var processedWorkspaces = workspaceServices.process(workspaces, 'COMPONENTS_MANAGER');
       $scope.staticFacets = processedWorkspaces.staticFacets;
       $scope.writeWorkspaces = processedWorkspaces.writeWorkspaces;
-      if(processedWorkspaces.readWorkspaces.length > 0) {
-        $scope.defaultFilters.workspace =  processedWorkspaces.readWorkspaces;
-      }
 
       $scope.selectWorkspaceForUpload = function (workspace) {
         $scope.selectedWorkspaceForUpload = workspace;
