@@ -14,33 +14,20 @@ module.exports = function(grunt) {
   // Time how long tasks take. Can help when optimizing build times
   require('time-grunt')(grunt);
 
-  var config;
+  var config = {
+    yeoman: {
+      setup: 'src/main/build',
+      app: 'src/main/webapp',
+      test: 'src/test/webapp',
+      dist: 'target/webapp',
+      serveOverride: 'src/test/webapp/serve-override'
+    }
+  };
   if(process.env.ALIEN_SOURCE_HOME) {
-    config = {
-      // Project settings
-      yeoman: {
-        setup: 'src/main/build',
-        app: 'src/main/webapp',
-        test: 'src/test/webapp',
-        dist: 'target/webapp',
-        alienSource: process.env.ALIEN_SOURCE_HOME,
-        serveOverride: 'src/test/webapp/serve-override'
-      }
-    };
+    config.yeoman.alienSource = process.env.ALIEN_SOURCE_HOME;
   } else {
-    config = {
-      // Project settings
-      yeoman: {
-        setup: 'src/main/build',
-        app: 'src/main/webapp',
-        test: 'src/test/webapp',
-        dist: 'target/webapp',
-        alienSource: '../alien4cloud/',
-        serveOverride: 'src/test/webapp/serve-override'
-      }
-    };
+    config.yeoman.alienSource = '../alien4cloud/';
   }
-
   grunt.config.merge(config);
 
   // Load configuration from multiple files
@@ -49,8 +36,6 @@ module.exports = function(grunt) {
     init: true,
     config: config
   });
-
-  console.log('Grunt configuration ', config, grunt.config('clean'));
 
   // register tasks from definition files.
   grunt.task.loadTasks('src/main/build/tasks');
