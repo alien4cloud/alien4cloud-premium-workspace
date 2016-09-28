@@ -217,7 +217,7 @@ public class WorkspaceService {
 
     private boolean isUsageStillSatisfiedAfterPromotion(Usage resource, String targetWorkSpace) {
         // If the target workspace is the parent of the workspace of the resource that requires the CSAR, then the resource can still use the CSAR
-        return resource.getWorkspace() == null || targetWorkSpace.equals(resource.getWorkspace())
+        return resource.getWorkspace() != null && targetWorkSpace.equals(resource.getWorkspace())
                 || isParentWorkspace(resource.getWorkspace(), targetWorkSpace);
     }
 
@@ -259,7 +259,7 @@ public class WorkspaceService {
                 topology.setWorkspace(targetWorkSpace);
                 topologyServiceCore.save(topology);
             }
-            AbstractToscaType[] types = typesCatalogService.getArchiveTypes(csar.getName(), csar.getVersion());
+            AbstractToscaType[] types = typesCatalogService.getArchiveTypes(impactedCsar.getName(), impactedCsar.getVersion());
             Arrays.stream(types).forEach(type -> {
                 type.setWorkspace(targetWorkSpace);
                 alienDAO.save(type);
