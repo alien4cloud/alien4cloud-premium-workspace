@@ -137,11 +137,11 @@ public class WorkspaceService {
             Arrays.stream(applicationsSearchResult.getData()).forEach(applicationRaw -> {
                 Application application = (Application) applicationRaw;
                 if (AuthorizationUtil.hasAuthorizationForApplication(application, ApplicationRole.APPLICATION_DEVOPS)) {
-                    workspaces.add(new Workspace(Scope.APPLICATION, application.getName(),
+                    workspaces.add(new Workspace(Scope.APPLICATION, application.getId(),
                             ImmutableSet.<Role> builder().add(Role.COMPONENTS_BROWSER).add(Role.COMPONENTS_MANAGER).add(Role.ARCHITECT).build()));
                 } else if (AuthorizationUtil.hasAuthorizationForApplication(application, ApplicationRole.APPLICATION_USER)) {
                     // A deployer must be an application user
-                    workspaces.add(new Workspace(Scope.APPLICATION, application.getName(), ImmutableSet.<Role> builder().add(Role.COMPONENTS_BROWSER).build()));
+                    workspaces.add(new Workspace(Scope.APPLICATION, application.getId(), ImmutableSet.<Role> builder().add(Role.COMPONENTS_BROWSER).build()));
                 }
             });
         }
