@@ -1,9 +1,9 @@
-package org.alien.workspace;
+package org.alien4cloud.workspace;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan({ "org.alien.workspace.rest", "org.alien.workspace.service" })
+@ComponentScan({ "org.alien4cloud.workspace" })
 public class PluginConfiguration {
 }

@@ -1,2 +1,34 @@
 {
+  "WORKSPACES": {
+    "TITLE": "Workspace",
+    "UPLOAD": "Workspace cible",
+    "CSAR": {
+      "TITLE": "CSARS",
+      "TEMPLATEAUTHOR": "Auteur",
+      "WORKSPACE": "Workspace"
+    },
+    "PROMOTION": {
+      "TITLE": "Promotion",
+      "IMPOSSIBLE": "La promotion est impossible car l'archive ou ses dépendances sont utilisées.",
+      "MOVE": {
+        "TITLE": "Déplacer l'archive dans un autre workspace"
+      },
+      "REQUEST": {
+        "TITLE": "Demander la promotion de l'archive dans un autre workspace"
+      },
+      "IMPACT": {
+        "TITLE": "Archives impactées par l'opération",
+        "RESOURCE_NAME": "Nom",
+        "RESOURCE_TYPE": "Type",
+        "RESOURCE_VERSION": "Version",
+        "NOT_USED": "Cette archive peut-être déplacée sans impacts.",
+        "USED": "Cette archive est utilisée et ne peut être déplacée, liste de dépendances:"
+      }
+    },
+    "SCOPE": {
+      "USER": "Workspace utilisateur",
+      "APP": "Workspace d'application",
+      "ALIEN_GLOBAL_WORKSPACE": "Workspace global"
+    }
+  }
 }

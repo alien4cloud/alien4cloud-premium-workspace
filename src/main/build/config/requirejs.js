@@ -21,13 +21,15 @@ module.exports = function (grunt) {
           'angular': 'empty:',
           'jquery': 'empty:',
           'componentService': 'empty:',
+          'scripts/common/directives/pagination': 'empty:',
+          'scripts/common/directives/facet_search_panel': 'empty:',
           'scripts/components/services/component_services': 'empty:',
           'scripts/common/directives/date_time_form': 'empty:',
           'scripts/common/directives/empty_place_holder': 'empty:',
           'scripts/applications/services/application_services': 'empty:',
           'scripts/applications/services/application_environment_services': 'empty:'
         },
-        namespace: 'alien4CloudPremiumLogs',
+        namespace: 'alien4CloudPremiumWorkspace',
 
         baseUrl: '.',
 
