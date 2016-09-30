@@ -30,14 +30,20 @@ public class SearchWorkspaceAspect {
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.checkAuthorization(..))")
     public void onCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
-        // we just override the basic security and mange it here
+        // we just override the basic security and manage it here
         ArchiveRoot archiveRoot = (ArchiveRoot) joinPoint.getArgs()[0];
         String workspace = archiveRoot.getArchive().getWorkspace();
         if (archiveRoot.hasToscaTopologyTemplate()) {
-            workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT));
+            if (!workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT))) {
+                throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                        + "> is not authorized to upload to workspace <" + workspace + ">.");
+            }
         }
         if (archiveRoot.hasToscaTypes()) {
-            workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER));
+            if (!workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER))) {
+                throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                        + "> is not authorized to upload to workspace <" + workspace + ">.");
+            }
         }
     }
 
