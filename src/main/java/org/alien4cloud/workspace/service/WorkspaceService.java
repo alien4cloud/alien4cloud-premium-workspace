@@ -26,6 +26,7 @@ import org.alien4cloud.workspace.model.PromotionRequest;
 import org.alien4cloud.workspace.model.PromotionStatus;
 import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -272,6 +273,9 @@ public class WorkspaceService {
     }
 
     public PromotionRequest promoteCSAR(PromotionRequest promotionRequest) {
+        if (StringUtils.isBlank(promotionRequest.getTargetWorkspace())) {
+            throw new InvalidArgumentException("Promotion request's target workspace is mandatory");
+        }
         Csar csar = csarService.getOrFail(promotionRequest.getCsarName(), promotionRequest.getCsarVersion());
         if (!getPromotionTargets(csar).stream().filter(workspace -> workspace.getId().equals(promotionRequest.getTargetWorkspace())).findFirst().isPresent()) {
             throw new AccessDeniedException("You don't have authorization to promote the CSAR [" + promotionRequest.getCsarName() + ":"
