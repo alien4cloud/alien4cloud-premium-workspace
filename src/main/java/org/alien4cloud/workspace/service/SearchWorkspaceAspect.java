@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
+import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.Role;
 import alien4cloud.tosca.model.ArchiveRoot;
 
@@ -30,6 +31,10 @@ public class SearchWorkspaceAspect {
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.checkAuthorization(..))")
     public void onCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return;
+        }
         // we just override the basic security and manage it here
         ArchiveRoot archiveRoot = (ArchiveRoot) joinPoint.getArgs()[0];
         String workspace = archiveRoot.getArchive().getWorkspace();
@@ -58,6 +63,10 @@ public class SearchWorkspaceAspect {
     }
 
     private Object doEnsureContext(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return joinPoint.proceed();
+        }
         Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[3];
         if (filters == null) {
             filters = new HashMap<>();
@@ -83,6 +92,10 @@ public class SearchWorkspaceAspect {
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.getAll(..))")
     public Object getAllMyWorkspaces(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return joinPoint.proceed();
+        }
         // Add workspaces filter on all workspaces with a write access.
         Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER));
         Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[0];
