@@ -7,6 +7,7 @@ define(function (require) {
   require('scripts/workspace/directives/display_workspace');
   require('scripts/workspace/services/workspace_service');
   require('scripts/workspace/directives/promotion_impact_ctrl');
+  var prefixer = require('scripts/plugin-url-prefixer');
 
   modules.get('alien4cloud-premium-workspace', []).controller('CsarPromotionController', ['$scope', 'workspaceServices', '$modal',
     function ($scope, workspaceServices, $modal) {
@@ -20,7 +21,7 @@ define(function (require) {
 
       $scope.openPromoteModal = function (promotionRequest) {
         var modalInstance = $modal.open({
-          templateUrl: 'views/workspace/promotion_impact.html',
+          templateUrl: prefixer.prefix('views/workspace/promotion_impact.html'),
           controller: 'PromotionImpactController',
           resolve: {
             impact: function () {
