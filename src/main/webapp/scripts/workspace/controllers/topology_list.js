@@ -66,7 +66,7 @@ define(function (require) {
       var processedWorkspaces = workspaceServices.process(workspaces, 'ARCHITECT');
       $scope.defaultFilters = {};
       $scope.staticFacets = processedWorkspaces.staticFacets;
-      $scope.writeWorkspaces = processedWorkspaces.writeWorkspaces;
+      $scope.writeWorkspaces = _.filter(processedWorkspaces.writeWorkspaces, function(workspace) { return workspace.scope !== 'APPLICATION'; });
 
       $scope.selectWorkspaceForUpload = function (workspace) {
         $scope.selectedWorkspaceForUpload = workspace;

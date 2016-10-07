@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
+import alien4cloud.common.AlienConstants;
 import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.Role;
 import alien4cloud.tosca.model.ArchiveRoot;
@@ -54,15 +57,16 @@ public class SearchWorkspaceAspect {
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService+.search(..))")
     public Object ensureTypeContext(ProceedingJoinPoint joinPoint) throws Throwable {
-        return doEnsureContext(joinPoint);
+        return doEnsureContext(joinPoint, workspace -> true);
     }
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.search(..))")
     public Object ensureTopologyContext(ProceedingJoinPoint joinPoint) throws Throwable {
-        return doEnsureContext(joinPoint);
+        // Topology from application workspace should not appear in topology catalog
+        return doEnsureContext(joinPoint, workspace -> !workspace.startsWith(AlienConstants.APP_WORKSPACE_PREFIX + ":"));
     }
 
-    private Object doEnsureContext(ProceedingJoinPoint joinPoint) throws Throwable {
+    private Object doEnsureContext(ProceedingJoinPoint joinPoint, Predicate<String> workspaceFilter) throws Throwable {
         // Called by Alien it-self and not by an active user so do not try to intercept
         if (AuthorizationUtil.getCurrentUser() == null) {
             return joinPoint.proceed();
@@ -73,7 +77,8 @@ public class SearchWorkspaceAspect {
             joinPoint.getArgs()[3] = filters;
         }
         String[] workspaces = filters.get("workspace");
-        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER));
+        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER)).stream().filter(workspaceFilter)
+                .collect(Collectors.toSet());
         if (workspaces == null) {
             // inject all user workspaces
             String[] workspaceIds = userWorkspaces.toArray(new String[userWorkspaces.size()]);
