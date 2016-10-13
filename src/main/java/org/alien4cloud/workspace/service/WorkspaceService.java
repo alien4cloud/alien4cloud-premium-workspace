@@ -242,8 +242,8 @@ public class WorkspaceService {
 
     private boolean isUsageStillSatisfiedAfterPromotion(Usage resource, String targetWorkSpace) {
         // If the target workspace is the parent of the workspace of the resource that requires the CSAR, then the resource can still use the CSAR
-        return resource.getWorkspace() != null && targetWorkSpace.equals(resource.getWorkspace())
-                || isParentWorkspace(resource.getWorkspace(), targetWorkSpace);
+        return resource.getWorkspace() != null
+                && (targetWorkSpace.equals(resource.getWorkspace()) || isParentWorkspace(resource.getWorkspace(), targetWorkSpace));
     }
 
     public CSARPromotionImpact getCSARPromotionImpact(Csar csar, String targetWorkSpace) {
