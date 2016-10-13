@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 
-import org.alien4cloud.tosca.catalog.index.CsarService;
+import org.alien4cloud.tosca.catalog.index.ICsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
 import org.alien4cloud.tosca.model.Csar;
@@ -44,11 +44,14 @@ import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.ApplicationRole;
 import alien4cloud.security.model.Role;
 import alien4cloud.security.model.User;
+import alien4cloud.security.users.IAlienUserDao;
 import alien4cloud.topology.TopologyServiceCore;
 import alien4cloud.utils.AlienUtils;
 
 @Service
 public class WorkspaceService {
+    @Resource
+    private IAlienUserDao alienUserDao;
     @Inject
     private ITopologyCatalogService topologyCatalogService;
     @Inject
@@ -56,7 +59,7 @@ public class WorkspaceService {
     @Inject
     private TopologyServiceCore topologyServiceCore;
     @Inject
-    private CsarService csarService;
+    private ICsarService csarService;
     @Resource(name = "alien-es-dao")
     private IGenericSearchDAO alienDAO;
     @Resource(name = "workspace-dao")
@@ -70,7 +73,7 @@ public class WorkspaceService {
         return globalWorkspace;
     }
 
-    private Workspace getUserWorkspace(Workspace userWorkspace, User currentUser) {
+    private Workspace getPersonalWorkspace(Workspace userWorkspace, User currentUser) {
         if (userWorkspace == null) {
             userWorkspace = new Workspace(Scope.USER, currentUser.getUserId(),
                     Sets.newHashSet(Role.COMPONENTS_BROWSER, Role.COMPONENTS_MANAGER, Role.ARCHITECT));
@@ -110,29 +113,50 @@ public class WorkspaceService {
             globalWorkspace = getGlobalWorkspace(globalWorkspace);
             globalWorkspace.getRoles().add(Role.COMPONENTS_MANAGER);
             globalWorkspace.getRoles().add(Role.COMPONENTS_BROWSER);
-            userWorkspace = getUserWorkspace(userWorkspace, currentUser);
+            userWorkspace = getPersonalWorkspace(userWorkspace, currentUser);
         }
         if (AuthorizationUtil.hasOneRoleIn(Role.ARCHITECT)) {
             globalWorkspace = getGlobalWorkspace(globalWorkspace);
             globalWorkspace.getRoles().add(Role.ARCHITECT);
             globalWorkspace.getRoles().add(Role.COMPONENTS_BROWSER);
-            userWorkspace = getUserWorkspace(userWorkspace, currentUser);
+            userWorkspace = getPersonalWorkspace(userWorkspace, currentUser);
         }
         if (AuthorizationUtil.hasOneRoleIn(Role.COMPONENTS_BROWSER)) {
             globalWorkspace = getGlobalWorkspace(globalWorkspace);
             globalWorkspace.getRoles().add(Role.COMPONENTS_BROWSER);
-            userWorkspace = getUserWorkspace(userWorkspace, currentUser);
+            userWorkspace = getPersonalWorkspace(userWorkspace, currentUser);
         }
         List<Workspace> workspaces = new ArrayList<>();
         addIfNotNull(workspaces, globalWorkspace);
-        addIfNotNull(workspaces, userWorkspace);
         workspaces.addAll(getUserApplicationWorkspaces());
+        if (AuthorizationUtil.hasOneRoleIn(Role.ADMIN)) {
+            // If the user is admin, he also has access to every user's workspaces
+            workspaces.addAll(getAllPersonalWorkspaces());
+        } else {
+            // Else he has access only to his own personal workspace
+            addIfNotNull(workspaces, userWorkspace);
+        }
         return workspaces;
+    }
+
+    private List<Workspace> getAllPersonalWorkspaces() {
+        // Get all users in the system
+        Object[] userResult = alienUserDao.find(Collections.emptyMap(), Integer.MAX_VALUE).getData();
+        if (userResult != null && userResult.length > 0) {
+            return Arrays.stream(userResult).map(userObject -> {
+                User user = (User) userObject;
+                return new Workspace(Scope.USER, user.getUserId(),
+                        ImmutableSet.<Role> builder().add(Role.COMPONENTS_BROWSER).add(Role.COMPONENTS_MANAGER).add(Role.ARCHITECT).build());
+            }).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     private List<Workspace> getUserApplicationWorkspaces() {
         List<Workspace> workspaces = new ArrayList<>();
         FilterBuilder authorizationFilter = AuthorizationUtil.getResourceAuthorizationFilters();
+        // Get all application in the system
         FacetedSearchResult applicationsSearchResult = alienDAO.facetedSearch(Application.class, null, null, authorizationFilter, null, 0, Integer.MAX_VALUE);
         if (applicationsSearchResult.getData() != null && applicationsSearchResult.getData().length > 0) {
             Arrays.stream(applicationsSearchResult.getData()).forEach(applicationRaw -> {

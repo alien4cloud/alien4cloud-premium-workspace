@@ -19,7 +19,7 @@ define(function (require) {
     resolve: {
       workspaces: ['workspaceServices', function (workspaceServices) {
         return workspaceServices.resource.get().$promise.then(function (response) {
-          return response.data;
+          return _.filter(response.data, function(workspace) { return workspace.scope !== 'APPLICATION'; });
         });
       }]
     }
@@ -66,7 +66,7 @@ define(function (require) {
       var processedWorkspaces = workspaceServices.process(workspaces, 'ARCHITECT');
       $scope.defaultFilters = {};
       $scope.staticFacets = processedWorkspaces.staticFacets;
-      $scope.writeWorkspaces = _.filter(processedWorkspaces.writeWorkspaces, function(workspace) { return workspace.scope !== 'APPLICATION'; });
+      $scope.writeWorkspaces = processedWorkspaces.writeWorkspaces;
 
       $scope.selectWorkspaceForUpload = function (workspace) {
         $scope.selectedWorkspaceForUpload = workspace;
