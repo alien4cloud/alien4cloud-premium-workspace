@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 
+import org.alien4cloud.tosca.catalog.events.BeforeArchivePromoted;
 import org.alien4cloud.tosca.catalog.index.ICsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
@@ -28,6 +29,7 @@ import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.index.query.FilterBuilder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -50,6 +52,8 @@ import alien4cloud.utils.AlienUtils;
 
 @Service
 public class WorkspaceService {
+    @Inject
+    private ApplicationEventPublisher publisher;
     @Resource
     private IAlienUserDao alienUserDao;
     @Inject
@@ -278,6 +282,7 @@ public class WorkspaceService {
     private void performPromotionImpact(Csar csar, String targetWorkSpace, CSARPromotionImpact impact) {
         impact.getImpactedCsars().values().forEach(impactedCsar -> {
             impactedCsar.setWorkspace(targetWorkSpace);
+            publisher.publishEvent(new BeforeArchivePromoted(this, impactedCsar.getId()));
             csarService.save(impactedCsar);
             Topology topology = topologyCatalogService.get(csar.getId());
             if (topology != null) {
