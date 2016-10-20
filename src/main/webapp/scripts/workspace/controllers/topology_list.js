@@ -19,7 +19,7 @@ define(function (require) {
     resolve: {
       workspaces: ['workspaceServices', function (workspaceServices) {
         return workspaceServices.resource.get().$promise.then(function (response) {
-          return response.data;
+          return _.filter(response.data, function(workspace) { return workspace.scope !== 'APPLICATION'; });
         });
       }]
     }

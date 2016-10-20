@@ -1,9 +1,9 @@
 define(function (require) {
   'use strict';
-
+  
   var modules = require('modules');
   var _ = require('lodash');
-
+  
   modules.get('alien4cloud-premium-workspace', ['ngResource']).factory('workspaceServices', ['$alresource', '$modal', function ($alresource, $modal) {
     var resource = $alresource('rest/latest/workspaces');
     var promotionImpact = $alresource('rest/latest/workspaces/promotion-impact');
@@ -12,14 +12,14 @@ define(function (require) {
       resource: resource,
       promotionImpact: promotionImpact,
       promotions: promotions,
-      process: function (workspaces, writeRole) {
+      process: function (workspaces, writeRoles) {
         var result = {
           writeWorkspaces: [],
           staticFacets: {},
           readWorkspaces: []
         };
         _.each(workspaces, function (workspace) {
-          if (_.includes(workspace.roles, writeRole)) {
+          if ((_.isArray(writeRoles) && _.intersection(writeRoles, workspace.roles).length > 0) || _.includes(workspace.roles, writeRoles)) {
             result.writeWorkspaces.push(workspace);
           }
           if (_.includes(workspace.roles, 'COMPONENTS_BROWSER')) {

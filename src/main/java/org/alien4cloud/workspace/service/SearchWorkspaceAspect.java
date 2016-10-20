@@ -1,11 +1,17 @@
 package org.alien4cloud.workspace.service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
+import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
+import org.alien4cloud.tosca.model.Csar;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -15,6 +21,8 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
+import alien4cloud.common.AlienConstants;
+import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.Role;
 import alien4cloud.tosca.model.ArchiveRoot;
 
@@ -26,34 +34,99 @@ import alien4cloud.tosca.model.ArchiveRoot;
 public class SearchWorkspaceAspect {
     @Inject
     private WorkspaceService workspaceService;
+    @Inject
+    private ITopologyCatalogService catalogService;
+    @Inject
+    private IToscaTypeSearchService searchService;
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.checkAuthorization(..))")
     public void onCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
-        // we just override the basic security and mange it here
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return;
+        }
+        // we just override the basic security and manage it here
         ArchiveRoot archiveRoot = (ArchiveRoot) joinPoint.getArgs()[0];
         String workspace = archiveRoot.getArchive().getWorkspace();
         if (archiveRoot.hasToscaTopologyTemplate()) {
-            workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT));
+            if (!workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT))) {
+                throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                        + "> is not authorized to upload to workspace <" + workspace + ">.");
+            }
         }
         if (archiveRoot.hasToscaTypes()) {
-            workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER));
+            if (!workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER))) {
+                throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                        + "> is not authorized to upload to workspace <" + workspace + ">.");
+            }
         }
+    }
+
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarAuthorizationFilter+.checkWriteAccess(..))")
+    public void onCsarUpdate(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return;
+        }
+        Csar csar = (Csar) joinPoint.getArgs()[0];
+        // if this csar has node types, check the COMPONENTS_MANAGER Role
+        if (searchService.hasTypes(csar.getName(), csar.getVersion())) {
+            if (!workspaceService.hasRoles(csar.getWorkspace(), Sets.newHashSet(Role.COMPONENTS_MANAGER))) {
+                throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                        + "> is not authorized to update csar <" + csar.getId() + "> of workspace <" + csar.getWorkspace() + ">.");
+            }
+        }
+        // if the csar is bound to a topology, check the ARCHITECT Role
+        if (catalogService.exists(csar.getId())) {
+            if (!workspaceService.hasRoles(csar.getWorkspace(), Sets.newHashSet(Role.ARCHITECT))) {
+                throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                        + "> is not authorized to update csar <" + csar.getId() + "> of workspace <" + csar.getWorkspace() + ">.");
+            }
+        }
+    }
+
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarAuthorizationFilter+.checkReadAccess(..))")
+    public void onCsarAccess(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return;
+        }
+        Csar csar = (Csar) joinPoint.getArgs()[0];
+        if (!workspaceService.hasRoles(csar.getWorkspace(), Sets.newHashSet(Role.COMPONENTS_BROWSER))) {
+            throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName() + "> is not authorized to access csar <"
+                    + csar.getId() + "> of workspace <" + csar.getWorkspace() + ">.");
+        }
+    }
+
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarService+.search(..))")
+    public Object ensureCSARContext(ProceedingJoinPoint joinPoint) throws Throwable {
+        return doEnsureContext(joinPoint, workspace -> true);
     }
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService+.search(..))")
     public Object ensureTypeContext(ProceedingJoinPoint joinPoint) throws Throwable {
-        return doEnsureContext(joinPoint);
+        return doEnsureContext(joinPoint, workspace -> true);
     }
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.search(..))")
     public Object ensureTopologyContext(ProceedingJoinPoint joinPoint) throws Throwable {
-        return doEnsureContext(joinPoint);
+        // Topology from application workspace should not appear in topology catalog
+        return doEnsureContext(joinPoint, workspace -> !workspace.startsWith(AlienConstants.APP_WORKSPACE_PREFIX + ":"));
     }
 
-    private Object doEnsureContext(ProceedingJoinPoint joinPoint) throws Throwable {
+    private Object doEnsureContext(ProceedingJoinPoint joinPoint, Predicate<String> workspaceFilter) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return joinPoint.proceed();
+        }
         Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[3];
+        if (filters == null) {
+            filters = new HashMap<>();
+            joinPoint.getArgs()[3] = filters;
+        }
         String[] workspaces = filters.get("workspace");
-        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER));
+        Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER)).stream().filter(workspaceFilter)
+                .collect(Collectors.toSet());
         if (workspaces == null) {
             // inject all user workspaces
             String[] workspaceIds = userWorkspaces.toArray(new String[userWorkspaces.size()]);
@@ -67,17 +140,25 @@ public class SearchWorkspaceAspect {
                 }
             }
         }
-        return joinPoint.proceed();
+        return joinPoint.proceed(joinPoint.getArgs());
     }
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ITopologyCatalogService+.getAll(..))")
     public Object getAllMyWorkspaces(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return joinPoint.proceed();
+        }
         // Add workspaces filter on all workspaces with a write access.
         Set<String> userWorkspaces = workspaceService.getUserWorkspaceIds(Collections.singleton(Role.COMPONENTS_BROWSER));
         Map<String, String[]> filters = (Map<String, String[]>) joinPoint.getArgs()[0];
+        if (filters == null) {
+            filters = new HashMap<>();
+            joinPoint.getArgs()[0] = filters;
+        }
         // add the workspaces
         filters.put("workspace", userWorkspaces.toArray(new String[userWorkspaces.size()]));
-        return joinPoint.proceed();
+        return joinPoint.proceed(joinPoint.getArgs());
     }
 
     // ITopologyCatalogService.getAll
