@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 import javax.inject.Inject;
 
 import org.alien4cloud.tosca.catalog.events.BeforeArchivePromoted;
-import org.alien4cloud.tosca.catalog.index.ICsarService;
+import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
 import org.alien4cloud.tosca.catalog.index.IToscaTypeSearchService;
 import org.alien4cloud.tosca.model.Csar;
@@ -63,7 +63,7 @@ public class WorkspaceService {
     @Inject
     private TopologyServiceCore topologyServiceCore;
     @Inject
-    private ICsarService csarService;
+    private CsarService csarService;
     @Resource(name = "alien-es-dao")
     private IGenericSearchDAO alienDAO;
     @Resource(name = "workspace-dao")
