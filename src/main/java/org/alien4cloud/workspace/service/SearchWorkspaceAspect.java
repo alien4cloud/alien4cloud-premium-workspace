@@ -98,7 +98,7 @@ public class SearchWorkspaceAspect {
         }
     }
 
-    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarService+.search(..))")
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarSearchService+.search(..))")
     public Object ensureCSARContext(ProceedingJoinPoint joinPoint) throws Throwable {
         return doEnsureContext(joinPoint, workspace -> true);
     }
