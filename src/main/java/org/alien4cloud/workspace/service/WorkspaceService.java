@@ -59,7 +59,7 @@ public class WorkspaceService {
     @Inject
     private ITopologyCatalogService topologyCatalogService;
     @Inject
-    private IToscaTypeSearchService typesCatalogService;
+    private IToscaTypeSearchService toscaTypeSearchService;
     @Inject
     private TopologyServiceCore topologyServiceCore;
     @Inject
@@ -222,7 +222,7 @@ public class WorkspaceService {
         if (topologyCatalogService.exists(csar.getId())) {
             expectedRoles.add(Role.ARCHITECT);
         }
-        if (typesCatalogService.hasTypes(csar.getName(), csar.getVersion())) {
+        if (toscaTypeSearchService.hasTypes(csar.getName(), csar.getVersion())) {
             expectedRoles.add(Role.COMPONENTS_MANAGER);
         }
         return expectedRoles;
@@ -289,7 +289,7 @@ public class WorkspaceService {
                 topology.setWorkspace(targetWorkSpace);
                 topologyServiceCore.save(topology);
             }
-            AbstractToscaType[] types = typesCatalogService.getArchiveTypes(impactedCsar.getName(), impactedCsar.getVersion());
+            AbstractToscaType[] types = toscaTypeSearchService.getArchiveTypes(impactedCsar.getName(), impactedCsar.getVersion());
             Arrays.stream(types).forEach(type -> {
                 type.setWorkspace(targetWorkSpace);
                 alienDAO.save(type);

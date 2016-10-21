@@ -37,7 +37,7 @@ public class SearchWorkspaceAspect {
     @Inject
     private ITopologyCatalogService catalogService;
     @Inject
-    private IToscaTypeSearchService searchService;
+    private IToscaTypeSearchService toscaTypeSearchService;
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.checkAuthorization(..))")
     public void onCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -70,7 +70,7 @@ public class SearchWorkspaceAspect {
         }
         Csar csar = (Csar) joinPoint.getArgs()[0];
         // if this csar has node types, check the COMPONENTS_MANAGER Role
-        if (searchService.hasTypes(csar.getName(), csar.getVersion())) {
+        if (toscaTypeSearchService.hasTypes(csar.getName(), csar.getVersion())) {
             if (!workspaceService.hasRoles(csar.getWorkspace(), Sets.newHashSet(Role.COMPONENTS_MANAGER))) {
                 throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
                         + "> is not authorized to update csar <" + csar.getId() + "> of workspace <" + csar.getWorkspace() + ">.");
