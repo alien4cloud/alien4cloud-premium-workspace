@@ -62,6 +62,21 @@ public class SearchWorkspaceAspect {
         }
     }
 
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.preCheckAuthorization(..))")
+    public void onBeforeCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return;
+        }
+        // we just override the basic security and manage it here
+        String workspace = (String) joinPoint.getArgs()[0];
+        if (!workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER))
+                && !workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT))) {
+            throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                    + "> is not authorized to upload to workspace <" + workspace + ">.");
+        }
+    }
+
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarAuthorizationFilter+.checkWriteAccess(..))")
     public void onCsarUpdate(ProceedingJoinPoint joinPoint) throws Throwable {
         // Called by Alien it-self and not by an active user so do not try to intercept
