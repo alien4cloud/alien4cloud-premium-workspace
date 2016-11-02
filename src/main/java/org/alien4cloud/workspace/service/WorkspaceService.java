@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 
+import org.alien4cloud.tosca.catalog.events.BeforeArchiveDeleted;
 import org.alien4cloud.tosca.catalog.events.BeforeArchivePromoted;
 import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
@@ -29,7 +30,10 @@ import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +42,7 @@ import com.google.common.collect.Sets;
 
 import alien4cloud.dao.IGenericSearchDAO;
 import alien4cloud.dao.model.FacetedSearchResult;
+import alien4cloud.exception.AlreadyExistException;
 import alien4cloud.exception.InvalidArgumentException;
 import alien4cloud.exception.NotFoundException;
 import alien4cloud.model.application.Application;
@@ -49,6 +54,7 @@ import alien4cloud.security.model.User;
 import alien4cloud.security.users.IAlienUserDao;
 import alien4cloud.topology.TopologyServiceCore;
 import alien4cloud.utils.AlienUtils;
+import alien4cloud.utils.MapUtil;
 
 @Service
 public class WorkspaceService {
@@ -302,6 +308,7 @@ public class WorkspaceService {
     }
 
     public PromotionRequest promoteCSAR(PromotionRequest promotionRequest) {
+        checkPromotionRequestUniqueness(promotionRequest);
         if (StringUtils.isBlank(promotionRequest.getTargetWorkspace())) {
             throw new InvalidArgumentException("Promotion request's target workspace is mandatory");
         }
@@ -334,6 +341,16 @@ public class WorkspaceService {
         promotionRequest.setId(UUID.randomUUID().toString());
         savePromotionRequest(promotionRequest);
         return promotionRequest;
+    }
+
+    private void checkPromotionRequestUniqueness(PromotionRequest promotionRequest) {
+        long pendingPromotionRequest = workspaceDAO.count(PromotionRequest.class, null,
+                MapUtil.newHashMap(new String[] { "csarName", "csarVersion", "status" }, new String[][] { new String[] { promotionRequest.getCsarName() },
+                        new String[] { promotionRequest.getCsarVersion() }, new String[] { promotionRequest.getStatus().toString() } }));
+        if (pendingPromotionRequest > 0) {
+            throw new AlreadyExistException("Pending promotion request already exists for CSAR " + promotionRequest.getCsarName() + " with version "
+                    + promotionRequest.getCsarVersion());
+        }
     }
 
     public PromotionRequest refuseCSARPromotion(PromotionRequest promotionRequest) {
@@ -374,5 +391,13 @@ public class WorkspaceService {
         if (!hasAcceptPromotionPrivilege(promotionRequest)) {
             throw new AccessDeniedException("You don't have authorization to accept/refuse the CSAR's promotion");
         }
+    }
+
+    @EventListener
+    public void onArchiveDeleted(BeforeArchiveDeleted beforeArchiveDeleted) {
+        Csar csar = csarService.getOrFail(beforeArchiveDeleted.getArchiveId());
+        QueryBuilder deleteQuery = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("csarName", csar.getName()))
+                .must(QueryBuilders.termQuery("csarVersion", csar.getVersion()));
+        workspaceDAO.delete(PromotionRequest.class, deleteQuery);
     }
 }
