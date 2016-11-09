@@ -37,7 +37,7 @@ public class SearchWorkspaceAspect {
     @Inject
     private ITopologyCatalogService catalogService;
     @Inject
-    private IToscaTypeSearchService searchService;
+    private IToscaTypeSearchService toscaTypeSearchService;
 
     @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.checkAuthorization(..))")
     public void onCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -62,6 +62,21 @@ public class SearchWorkspaceAspect {
         }
     }
 
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.IArchiveIndexerAuthorizationFilter+.preCheckAuthorization(..))")
+    public void onBeforeCatalogUpload(ProceedingJoinPoint joinPoint) throws Throwable {
+        // Called by Alien it-self and not by an active user so do not try to intercept
+        if (AuthorizationUtil.getCurrentUser() == null) {
+            return;
+        }
+        // we just override the basic security and manage it here
+        String workspace = (String) joinPoint.getArgs()[0];
+        if (!workspaceService.hasRoles(workspace, Sets.newHashSet(Role.COMPONENTS_MANAGER))
+                && !workspaceService.hasRoles(workspace, Sets.newHashSet(Role.ARCHITECT))) {
+            throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
+                    + "> is not authorized to upload to workspace <" + workspace + ">.");
+        }
+    }
+
     @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarAuthorizationFilter+.checkWriteAccess(..))")
     public void onCsarUpdate(ProceedingJoinPoint joinPoint) throws Throwable {
         // Called by Alien it-self and not by an active user so do not try to intercept
@@ -70,7 +85,7 @@ public class SearchWorkspaceAspect {
         }
         Csar csar = (Csar) joinPoint.getArgs()[0];
         // if this csar has node types, check the COMPONENTS_MANAGER Role
-        if (searchService.hasTypes(csar.getName(), csar.getVersion())) {
+        if (toscaTypeSearchService.hasTypes(csar.getName(), csar.getVersion())) {
             if (!workspaceService.hasRoles(csar.getWorkspace(), Sets.newHashSet(Role.COMPONENTS_MANAGER))) {
                 throw new AccessDeniedException("user <" + SecurityContextHolder.getContext().getAuthentication().getName()
                         + "> is not authorized to update csar <" + csar.getId() + "> of workspace <" + csar.getWorkspace() + ">.");
@@ -98,7 +113,7 @@ public class SearchWorkspaceAspect {
         }
     }
 
-    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarService+.search(..))")
+    @Around("execution(* org.alien4cloud.tosca.catalog.index.ICsarSearchService+.search(..))")
     public Object ensureCSARContext(ProceedingJoinPoint joinPoint) throws Throwable {
         return doEnsureContext(joinPoint, workspace -> true);
     }

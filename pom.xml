@@ -3,10 +3,10 @@
   <parent>
     <groupId>alien4cloud</groupId>
     <artifactId>alien4cloud-parent</artifactId>
-    <version>1.3.0-RC2</version>
+    <version>1.3.0-RC3</version>
   </parent>
   <artifactId>alien4cloud-premium-workspace</artifactId>
-  <version>1.3.0-RC2</version>
+  <version>1.3.0-RC3</version>
   <name>Alien 4 Cloud premium workspace plugin</name>
   <description>Add workspace provider to A4C.</description>
 
