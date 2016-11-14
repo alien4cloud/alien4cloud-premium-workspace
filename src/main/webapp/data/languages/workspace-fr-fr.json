@@ -2,25 +2,31 @@
   "WORKSPACES": {
     "TITLE": "Workspace",
     "UPLOAD": "Workspace cible",
-    "CSAR": {
-      "TITLE": "CSARS",
-      "TEMPLATEAUTHOR": "Auteur",
-      "WORKSPACE": "Workspace"
-    },
     "PROMOTION": {
+      "ACTIVE_FILTERS": "Filtres actifs",
       "TITLE": "Promotion",
+      "CSARNAME": "Nom du CSAR",
+      "CSARVERSION": "Version du CSAR",
+      "TARGETWORKSPACE": "Workspace cible",
+      "STATUS": "Etat",
+      "ACCEPT": "Accepté",
+      "REFUSE": "Refusé",
+      "PROCESSUSER": "Traité par l'utilisateur",
+      "PROCESSDATE": "Date de traitement",
+      "REQUESTUSER": "Utilisateur à l'origine de la demande",
+      "REQUESTDATE": "Date de la demande",
       "IMPOSSIBLE": "La promotion est impossible car l'archive ou ses dépendances sont utilisées.",
       "MOVE": {
-        "TITLE": "Déplacer l'archive dans un autre workspace"
+        "TITLE": "Déplacer l'archive dans un autre workspace",
+        "DONE": "Le CSAR a été promu"
       },
       "REQUEST": {
-        "TITLE": "Demander la promotion de l'archive dans un autre workspace"
+        "TITLE": "Demander la promotion de l'archive dans un autre workspace",
+        "DONE": "La demande de promotion du CSAR a été créée"
       },
       "IMPACT": {
         "TITLE": "Archives impactées par l'opération",
-        "RESOURCE_NAME": "Nom",
-        "RESOURCE_TYPE": "Type",
-        "RESOURCE_VERSION": "Version",
+        "WORKSPACE": "Workspace",
         "NOT_USED": "Cette archive peut-être déplacée sans impacts.",
         "USED": "Cette archive est utilisée et ne peut être déplacée, liste de dépendances:"
       }
