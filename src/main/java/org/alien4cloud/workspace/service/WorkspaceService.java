@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 
-import org.alien4cloud.tosca.catalog.events.BeforeArchiveDeleted;
 import org.alien4cloud.tosca.catalog.events.BeforeArchivePromoted;
 import org.alien4cloud.tosca.catalog.index.CsarService;
 import org.alien4cloud.tosca.catalog.index.ITopologyCatalogService;
@@ -30,10 +29,7 @@ import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -391,13 +387,5 @@ public class WorkspaceService {
         if (!hasAcceptPromotionPrivilege(promotionRequest)) {
             throw new AccessDeniedException("You don't have authorization to accept/refuse the CSAR's promotion");
         }
-    }
-
-    @EventListener
-    public void onArchiveDeleted(BeforeArchiveDeleted beforeArchiveDeleted) {
-        Csar csar = csarService.getOrFail(beforeArchiveDeleted.getArchiveId());
-        QueryBuilder deleteQuery = QueryBuilders.boolQuery().must(QueryBuilders.termQuery("csarName", csar.getName()))
-                .must(QueryBuilders.termQuery("csarVersion", csar.getVersion()));
-        workspaceDAO.delete(PromotionRequest.class, deleteQuery);
     }
 }
