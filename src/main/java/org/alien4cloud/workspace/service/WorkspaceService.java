@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
+import alien4cloud.dao.FilterUtil;
 import alien4cloud.dao.IGenericSearchDAO;
 import alien4cloud.dao.model.FacetedSearchResult;
 import alien4cloud.exception.AlreadyExistException;
@@ -51,8 +53,10 @@ import alien4cloud.security.users.IAlienUserDao;
 import alien4cloud.topology.TopologyServiceCore;
 import alien4cloud.utils.AlienUtils;
 import alien4cloud.utils.MapUtil;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class WorkspaceService {
     @Inject
     private ApplicationEventPublisher publisher;
@@ -386,6 +390,28 @@ public class WorkspaceService {
     private void checkAcceptPromotionPrivilege(PromotionRequest promotionRequest) {
         if (!hasAcceptPromotionPrivilege(promotionRequest)) {
             throw new AccessDeniedException("You don't have authorization to accept/refuse the CSAR's promotion");
+        }
+    }
+
+    public void deleteWorkspace(String workspaceId) {
+        log.info("Delete all workspace content for workspace [" + workspaceId + "]");
+        // TODO an user or an application can have a lots of CSARs ?
+        FacetedSearchResult<Csar> csarFacetedSearchResult = alienDAO.facetedSearch(Csar.class, null, FilterUtil.singleKeyFilter("workspace", workspaceId), null,
+                0, Integer.MAX_VALUE);
+        if (csarFacetedSearchResult.getData() != null) {
+            log.info("For workspace [" + workspaceId + "], found [" + csarFacetedSearchResult.getData().length + "] csars to delete");
+            Arrays.stream(csarFacetedSearchResult.getData()).forEach(csar -> {
+                // This code is for the day when we refactor the key 'workspace' to other thing, so that it will not delete every CSAR of the platform
+                if (Objects.equals(workspaceId, csar.getWorkspace())) {
+                    log.info("Delete [" + csar.getId() + "] from workspace [" + csar.getWorkspace() + "]");
+                    csarService.deleteCsar(csar);
+                } else {
+                    log.error("Receiving unrelated csar [" + csar.getId() + "] from workspace [" + csar.getWorkspace() + "] when deleting workspace ["
+                            + workspaceId + "]");
+                }
+            });
+        } else {
+            log.info("For workspace [" + workspaceId + "], no csar found");
         }
     }
 }
