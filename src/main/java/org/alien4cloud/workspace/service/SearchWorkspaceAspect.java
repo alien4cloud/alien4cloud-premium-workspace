@@ -21,10 +21,10 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
-import alien4cloud.common.AlienConstants;
 import alien4cloud.security.AuthorizationUtil;
 import alien4cloud.security.model.Role;
 import alien4cloud.tosca.model.ArchiveRoot;
+import alien4cloud.utils.AlienConstants;
 
 /**
  * Aspect that ensure the search filters respect the user workspaces.
