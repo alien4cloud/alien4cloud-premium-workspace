@@ -18,12 +18,12 @@ define(function (require) {
     }
   });
   
-  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceCsarListCtrl', ['$controller', '$scope', '$modal', '$state', 'csarService', '$translate', 'toaster', 'workspaceServices', 'workspaces', 'authService',
-    function ($controller, $scope, $modal, $state, csarService, $translate, toaster, workspaceServices, workspaces, authService) {
+  modules.get('a4c-components', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceCsarListCtrl', ['$controller', '$scope', '$uibModal', '$state', 'csarService', '$translate', 'toaster', 'workspaceServices', 'workspaces', 'authService',
+    function ($controller, $scope, $uibModal, $state, csarService, $translate, toaster, workspaceServices, workspaces, authService) {
       // Apply opensource controller first
       $controller('CsarListCtrl', {
         $scope: $scope,
-        $modal: $modal,
+        $uibModal: $uibModal,
         $state: $state,
         csarService: csarService,
         $translate: $translate,

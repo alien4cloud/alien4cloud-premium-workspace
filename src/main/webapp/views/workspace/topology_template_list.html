@@ -3,12 +3,12 @@
     <div class="col-md-3">
       <div class="well">
         <div>{{'WORKSPACES.UPLOAD' | translate}}</div>
-        <div class="dropdown">
-          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        <div uib-dropdown>
+          <button type="button" class="btn btn-default" uib-dropdown-toggle>
             <display-workspace workspace-id="{{selectedWorkspaceForUpload.id}}"></display-workspace>
             <span class="caret"></span>
           </button>
-          <ul class="dropdown-menu" role="menu" style="z-index: 2000;">
+          <ul class="dropdown-menu" uib-dropdown-menu role="menu" style="z-index: 2000;">
             <li ng-repeat="workspace in writeWorkspaces"
                 ng-if="workspace !== selectedWorkspaceForUpload"
                 class="option-selected"

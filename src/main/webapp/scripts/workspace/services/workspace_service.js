@@ -1,10 +1,10 @@
 define(function (require) {
   'use strict';
-  
+
   var modules = require('modules');
   var _ = require('lodash');
-  
-  modules.get('alien4cloud-premium-workspace', ['ngResource']).factory('workspaceServices', ['$alresource', '$modal', function ($alresource, $modal) {
+
+  modules.get('alien4cloud-premium-workspace', ['ngResource']).factory('workspaceServices', ['$alresource', function ($alresource) {
     var resource = $alresource('rest/latest/workspaces');
     var promotionImpact = $alresource('rest/latest/workspaces/promotion-impact');
     var promotions = $alresource('rest/latest/workspaces/promotions');
@@ -30,9 +30,6 @@ define(function (require) {
             result.readWorkspaces.push(workspace.id);
           }
         });
-        // if(_.defined(result.staticFacets.workspace)) {
-        //   result.staticFacets.workspace[0].staticFilter = result.readWorkspaces;
-        // }
         return result;
       }
     };

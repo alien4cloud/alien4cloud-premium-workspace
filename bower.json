@@ -2,7 +2,7 @@
   "name": "alien4cloud-workspace-plugin",
   "version": "1.0.0",
   "dependencies": {
-    "requirejs": "2.1.10"
+    "requirejs": "2.1.19"
   },
   "devDependencies": {}
 }

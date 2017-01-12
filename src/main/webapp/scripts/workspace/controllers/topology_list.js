@@ -26,10 +26,10 @@ define(function (require) {
   });
 
   modules.get('a4c-topology-templates', ['ui.router', 'a4c-auth', 'a4c-common']).controller('WorkspaceTopologyTemplateListCtrl',
-    ['$scope', '$modal', '$alresource', '$state', 'authService', '$controller', 'workspaceServices', 'workspaces',
-    function ($scope, $modal, $alresource, $state, authService, $controller, workspaceServices, workspaces) {
+    ['$scope', '$uibModal', '$alresource', '$state', 'authService', '$controller', 'workspaceServices', 'workspaces',
+    function ($scope, $uibModal, $alresource, $state, authService, $controller, workspaceServices, workspaces) {
       // Apply opensource controller first
-      $controller('TopologyTemplateListCtrl', { $scope: $scope, $modal: $modal, $alresource: $alresource, $state: $state, authService: authService });
+      $controller('TopologyTemplateListCtrl', { $scope: $scope, $uibModal: $uibModal, $alresource: $alresource, $state: $state, authService: authService });
 
       // Override the new topology template modal to add workspace information
       var createTopologyTemplateResource = $alresource('/rest/latest/workspaces/topologies/template');
@@ -56,7 +56,7 @@ define(function (require) {
           resolve: { topology: function() { return topology; } }
         };
 
-        var modalInstance = $modal.open(modalConfiguration);
+        var modalInstance = $uibModal.open(modalConfiguration);
         modalInstance.result.then(function(topologyTemplate) {
           topologyTemplate.workspace = $scope.selectedWorkspaceForUpload.id;
           $scope.createTopologyTemplate(topologyTemplate);
