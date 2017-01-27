@@ -9,8 +9,8 @@ define(function (require) {
   require('scripts/workspace/directives/promotion_impact_ctrl');
   var prefixer = require('scripts/plugin-url-prefixer');
 
-  modules.get('alien4cloud-premium-workspace', []).controller('CsarPromotionController', ['$scope', 'workspaceServices', '$modal',
-    function ($scope, workspaceServices, $modal) {
+  modules.get('alien4cloud-premium-workspace', []).controller('CsarPromotionController', ['$scope', 'workspaceServices', '$uibModal',
+    function ($scope, workspaceServices, $uibModal) {
       // Add methods to handle promotion modal
       $scope.onSearch = function (searchConfig) {
         $scope.searchConfig = searchConfig;
@@ -20,7 +20,7 @@ define(function (require) {
       };
 
       $scope.openPromoteModal = function (promotionRequest) {
-        var modalInstance = $modal.open({
+        var modalInstance = $uibModal.open({
           templateUrl: prefixer.prefix('views/workspace/promotion_impact.html'),
           controller: 'PromotionImpactController',
           resolve: {

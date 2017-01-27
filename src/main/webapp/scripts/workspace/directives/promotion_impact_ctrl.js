@@ -3,15 +3,15 @@ define(function (require) {
 
   var modules = require('modules');
 
-  modules.get('alien4cloud-premium-workspace', []).controller('PromotionImpactController', ['$scope', '$modalInstance', 'impact',
-    function ($scope, $modalInstance, impact) {
+  modules.get('alien4cloud-premium-workspace', []).controller('PromotionImpactController', ['$scope', '$uibModalInstance', 'impact',
+    function ($scope, $uibModalInstance, impact) {
       $scope.impact = impact;
       $scope.ok = function () {
-        $modalInstance.close();
+        $uibModalInstance.close();
       };
 
       $scope.cancel = function () {
-        $modalInstance.dismiss('cancel');
+        $uibModalInstance.dismiss('cancel');
       };
 
       $scope.getResourceVersion = function (resourceId) {
