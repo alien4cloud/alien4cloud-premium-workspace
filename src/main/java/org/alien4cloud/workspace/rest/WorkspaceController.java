@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import alien4cloud.dao.IGenericSearchDAO;
 import alien4cloud.dao.model.FacetedSearchResult;
 import alien4cloud.exception.InvalidArgumentException;
-import alien4cloud.rest.component.SearchRequest;
+import alien4cloud.rest.model.FilteredSearchRequest;
 import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
 import io.swagger.annotations.Api;
@@ -61,7 +61,7 @@ public class WorkspaceController {
             @Authorization("COMPONENTS_MANAGER"), @Authorization("ARCHITECT") })
     @RequestMapping(value = "csars/search", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
-    public RestResponse<FacetedSearchResult> searchCSARs(@RequestBody SearchRequest searchRequest) {
+    public RestResponse<FacetedSearchResult> searchCSARs(@RequestBody FilteredSearchRequest searchRequest) {
         Map<String, String[]> filters = searchRequest.getFilters();
         if (filters == null) {
             filters = Maps.newHashMap();
@@ -114,7 +114,7 @@ public class WorkspaceController {
             @Authorization("ARCHITECT") })
     @RequestMapping(value = "promotions/search", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ADMIN', 'COMPONENTS_BROWSER', 'COMPONENTS_MANAGER', 'ARCHITECT')")
-    public RestResponse<FacetedSearchResult> listPromotion(@RequestBody SearchRequest searchRequest) {
+    public RestResponse<FacetedSearchResult> listPromotion(@RequestBody FilteredSearchRequest searchRequest) {
         Map<String, String[]> filters = searchRequest.getFilters();
         if (filters == null) {
             filters = Maps.newHashMap();
