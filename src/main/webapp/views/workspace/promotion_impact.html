@@ -15,7 +15,7 @@
     <div class="row">
       <div class="col-md-12">
         <uib-accordion close-others="oneAtATime">
-          <uib-accordion-group is-open="status.open" ng-repeat="(csarId, csar) in impact.impactedCsars">
+          <div uib-accordion-group is-open="status.open" ng-repeat="(csarId, csar) in impact.impactedCsars">
             <uib-accordion-heading>
               <div
                   ng-class="{'text-success': !impact.currentUsages || !impact.currentUsages[csarId] || impact.currentUsages[csarId].length == 0, 'text-danger': impact.currentUsages[csarId].length > 0}">
@@ -59,7 +59,7 @@
                 </div>
               </div>
             </div>
-          </uib-accordion-group>
+          </div>
         </uib-accordion>
       </div>
     </div>

@@ -9,8 +9,8 @@
       "CSARVERSION": "Version du CSAR",
       "TARGETWORKSPACE": "Workspace cible",
       "STATUS": "Etat",
-      "ACCEPT": "Accepté",
-      "REFUSE": "Refusé",
+      "ACCEPT": "Accepter",
+      "REFUSE": "Refuser",
       "PROCESSUSER": "Traité par l'utilisateur",
       "PROCESSDATE": "Date de traitement",
       "REQUESTUSER": "Utilisateur à l'origine de la demande",
@@ -29,6 +29,11 @@
         "WORKSPACE": "Workspace",
         "NOT_USED": "Cette archive peut-être déplacée sans impacts.",
         "USED": "Cette archive est utilisée et ne peut être déplacée, liste de dépendances:"
+      },
+      "STATUSES": {
+        "ACCEPTED": "Accepté",
+        "REFUSED": "Refusé",
+        "INIT": "En attente"
       }
     },
     "SCOPE": {

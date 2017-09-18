@@ -1,0 +1,18 @@
+<span>{{'WORKSPACES.UPLOAD' | translate}}</span>
+<span ng-if="writeWorkspaces.length > 1" uib-dropdown>
+  <a class="btn btn-default btn-sm" uib-dropdown-toggle>
+    <display-workspace workspace-id="{{selectedWorkspaceForUpload.id}}"></display-workspace>
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" uib-dropdown-menu role="menu" style="z-index: 2000;">
+    <li ng-repeat="workspace in writeWorkspaces"
+        ng-if="workspace !== selectedWorkspaceForUpload"
+        class="option-selected"
+        style="z-index: 2000;">
+      <a ng-click="selectWorkspaceForUpload(workspace)">
+        <display-workspace workspace-id="{{workspace.id}}"></display-workspace>
+      </a>
+    </li>
+  </ul>
+</span>
+<display-workspace  ng-if="writeWorkspaces.length == 1" workspace-id="{{selectedWorkspaceForUpload.id}}"></display-workspace>
