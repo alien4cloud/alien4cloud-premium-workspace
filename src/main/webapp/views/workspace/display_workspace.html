@@ -1,5 +1,5 @@
 <span ng-if="workspaceId"><i class="fa"
          ng-class="{'fa-user': workspace.scope === 'user', 'fa-desktop': workspace.scope === 'app', 'fa-globe': workspace.scope === 'ALIEN_GLOBAL_WORKSPACE'}"
          uib-tooltip="{{'WORKSPACES.SCOPE.' + workspace.scope.toUpperCase() | translate}}"></i>
-  {{workspace.name || 'Global'}}&nbsp;
+  <span uib-tooltip="{{'WORKSPACES.TITLE' | translate}}" tooltip-append-to-body="true">{{workspace.name || 'Global'}}&nbsp;</span>
 </span>
