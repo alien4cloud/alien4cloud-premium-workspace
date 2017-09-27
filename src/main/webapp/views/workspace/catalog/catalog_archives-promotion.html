@@ -24,7 +24,11 @@
       <tbody>
       <tr ng-repeat="promotionDTO in searchConfig.result.data" name="promotion_{{promotionDTO.promotionRequest.id}}">
         <td>
-          <i class="pull-left media-object fa fa-forward"></i>
+          <i class="pull-left media-object fa"
+            uib-tooltip="{{'WORKSPACES.PROMOTION.STATUSES.'+promotionDTO.promotionRequest.status.toUpperCase() | translate}}"
+            ng-class="{'fa-forward text-warning': promotionDTO.promotionRequest.status==='INIT',
+                       'fa-check text-success': promotionDTO.promotionRequest.status==='ACCEPTED',
+                       'fa-ban text-danger': promotionDTO.promotionRequest.status==='REFUSED'}"></i>
         </td>
         <td>{{promotionDTO.promotionRequest.csarName}}</td>
         <td>{{promotionDTO.promotionRequest.csarVersion}}</td>
@@ -34,12 +38,12 @@
           <display-workspace workspace-id="{{promotionDTO.promotionRequest.targetWorkspace}}"></display-workspace>
         </td>
         <td>
-          <button class="btn btn-primary"
+          <button class="btn btn-primary btn-sm"
                   ng-if="promotionDTO.hasPromotionPrivilege && promotionDTO.promotionRequest.status === 'INIT'"
                   ng-click="openPromoteModal(promotionDTO.promotionRequest)">{{ 'WORKSPACES.PROMOTION.ACCEPT' |
             translate}}
           </button>
-          <button class="btn btn-danger"
+          <button class="btn btn-danger btn-sm"
                   ng-if="promotionDTO.hasPromotionPrivilege && promotionDTO.promotionRequest.status === 'INIT'"
                   ng-click="refusePromotion(promotionDTO.promotionRequest)">{{ 'WORKSPACES.PROMOTION.REFUSE' |
             translate}}
