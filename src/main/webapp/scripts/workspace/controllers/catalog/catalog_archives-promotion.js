@@ -20,13 +20,19 @@ define(function (require) {
       id: 'catalog.archives-promotion',
       state: 'catalog.archives-promotion',
       key: 'NAVCATALOG.ARCHIVES_PROMOTION',
-      // icon: 'fa fa-archive',
       priority: 20,
     }
   });
 
-  modules.get('alien4cloud-premium-workspace', []).controller('ArchivesPromotionCtrl', ['$scope', 'workspaceServices', '$uibModal',
-    function ($scope, workspaceServices, $uibModal) {
+  modules.get('alien4cloud-premium-workspace', []).controller('ArchivesPromotionCtrl', ['$scope', 'breadcrumbsService', '$translate', 'workspaceServices', '$uibModal',
+    function ($scope, breadcrumbsService, $translate, workspaceServices, $uibModal) {
+      breadcrumbsService.putConfig({
+        state : 'catalog.archives-promotion',
+        text: function() {
+          return $translate.instant('NAVCATALOG.ARCHIVES_PROMOTION');
+        }
+      });
+
       // Add methods to handle promotion modal
       $scope.onSearch = function (searchConfig) {
         $scope.searchConfig = searchConfig;
