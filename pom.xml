@@ -6,7 +6,7 @@
     <version>1.4.4-SNAPSHOT</version>
   </parent>
   <artifactId>alien4cloud-premium-workspace</artifactId>
-  <version>1.4.3.3-SNAPSHOT</version>
+  <version>1.4.3.3</version>
   <name>Alien 4 Cloud premium workspace plugin</name>
   <description>Add workspace provider to A4C.</description>
 
