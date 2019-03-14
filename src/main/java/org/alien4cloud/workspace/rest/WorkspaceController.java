@@ -16,7 +16,7 @@ import org.alien4cloud.workspace.model.PromotionRequest;
 import org.alien4cloud.workspace.model.PromotionStatus;
 import org.alien4cloud.workspace.model.Workspace;
 import org.alien4cloud.workspace.service.WorkspaceService;
-import org.elasticsearch.common.collect.Maps;
+import com.google.common.collect.Maps;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;

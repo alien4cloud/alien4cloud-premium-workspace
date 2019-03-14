@@ -29,7 +29,7 @@ import org.alien4cloud.workspace.model.PromotionStatus;
 import org.alien4cloud.workspace.model.Scope;
 import org.alien4cloud.workspace.model.Workspace;
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -165,7 +165,7 @@ public class WorkspaceService {
 
     private List<Workspace> getUserApplicationWorkspaces() {
         List<Workspace> workspaces = new ArrayList<>();
-        FilterBuilder authorizationFilter = AuthorizationUtil.getResourceAuthorizationFilters();
+        QueryBuilder authorizationFilter = AuthorizationUtil.getResourceAuthorizationFilters();
         // Get all application in the system
         FacetedSearchResult applicationsSearchResult = alienDAO.facetedSearch(Application.class, null, null, authorizationFilter, null, 0, Integer.MAX_VALUE);
         if (applicationsSearchResult.getData() != null && applicationsSearchResult.getData().length > 0) {
