@@ -122,7 +122,7 @@ public class WorkspaceController {
         List<String> userWorkspaces = workspaceService.getUserWorkspaces().stream().map(Workspace::getId).collect(Collectors.toList());
         filters.put("targetWorkspace", userWorkspaces.toArray(new String[userWorkspaces.size()]));
         FacetedSearchResult searchResult = workspaceDAO.facetedSearch(PromotionRequest.class, searchRequest.getQuery(), filters, null, null,
-                searchRequest.getFrom(), searchRequest.getSize(), "requestDate", true);
+                searchRequest.getFrom(), searchRequest.getSize(), "requestDate", "date", true);
         Object[] enrichedData = Arrays.stream(searchResult.getData()).map(promotionRequestRaw -> {
             PromotionRequest promotionRequest = (PromotionRequest) promotionRequestRaw;
             return new PromotionDTO(promotionRequest, workspaceService.hasAcceptPromotionPrivilege(promotionRequest));
