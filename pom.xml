@@ -18,7 +18,7 @@
   </repositories>
 
   <scm>
-    <connection>scm:git:https://fastconnect.org/gitlab/alien4cloud/alien4cloud-premium-workspace.git</connection>
+    <connection>scm:git:https://github.com/alien4cloud/alien4cloud-premium-workspace.git</connection>
   </scm>
 
   <distributionManagement>
