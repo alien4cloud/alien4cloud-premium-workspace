@@ -1,10 +1,12 @@
-<span ng-if="csar.availablePromotionTargets.length > 0" uib-dropdown>
-  <a class="btn btn-default btn-xs" uib-dropdown-toggle ng-click="$event.stopPropagation()">
+
+<span uib-dropdown>
+  <a class="btn btn-default btn-xs" uib-dropdown-toggle ng-click="$event.stopPropagation(); getPromotionTargets(csar)">
     <display-workspace workspace-id="{{csar.workspace}}"></display-workspace>
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu dropdown-menu-right" uib-dropdown-menu role="menu">
-    <li ng-repeat="workspace in csar.availablePromotionTargets"
+    <li role="presentation" class="dropdown-header">{{'WORKSPACES.UPLOAD' | translate }}</li>
+    <li ng-repeat="workspace in currentAvailablePromotionTargets"
         class="option-selected">
       <a ng-click="calculateImpact(csar, workspace); $event.stopPropagation();">
         <display-workspace workspace-id="{{workspace.id}}"></display-workspace>
@@ -12,5 +14,4 @@
     </li>
   </ul>
 </span>
-<display-workspace ng-if="csar.availablePromotionTargets.length == 0"
-                   workspace-id="{{csar.workspace}}"></display-workspace>
+

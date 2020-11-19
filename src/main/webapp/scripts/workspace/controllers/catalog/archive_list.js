@@ -36,17 +36,10 @@ define(function (require) {
       var processedWorkspaces = workspaceServices.process(workspaces, ['COMPONENTS_MANAGER', 'ARCHITECT']);
       // $scope.staticFacets = processedWorkspaces.staticFacets;
 
-      var processSearchResponse = function(searchResult){
-        searchResult.data = _.map(searchResult.data, function(csarWorkspaceDTO){
-          csarWorkspaceDTO.csar.availablePromotionTargets = csarWorkspaceDTO.availablePromotionTargets;
-          return csarWorkspaceDTO.csar;
-        });
-      };
-
       //onSearchCompleted callback
       $scope.queryManager.onSearchCompleted = function(searchResponse){
         if(_.defined(searchResponse.data)){
-          processSearchResponse(searchResponse.data);
+          //processSearchResponse(searchResponse.data);
           $scope.queryManager.searchResult = searchResponse.data;
         }else{
           $scope.queryManager.searchResult = undefined;
@@ -77,6 +70,17 @@ define(function (require) {
           workspace: scope.selectedWorkspaceForUpload.id
         };
       };
+
+      // retrieve the possible promotion target workspaces for a given csar
+      $scope.getPromotionTargets = function(csar) {
+        $scope.currentAvailablePromotionTargets = [];
+        workspaceServices.promotionTargets.get({csarId: csar.name + ":" + csar.version}, function(success) {
+          if (_.defined(success.data)) {
+            console.log(success.data);
+            $scope.currentAvailablePromotionTargets = success.data.availablePromotionTargets;
+          }
+        })
+      }
 
       // calculate impact of a csar promotion into a given workspace
       $scope.calculateImpact = function (csar, workspace) {

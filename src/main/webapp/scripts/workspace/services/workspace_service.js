@@ -8,10 +8,12 @@ define(function (require) {
     var resource = $alresource('rest/latest/workspaces');
     var promotionImpact = $alresource('rest/latest/workspaces/promotion-impact');
     var promotions = $alresource('rest/latest/workspaces/promotions');
+    var promotionTargets = $alresource('rest/latest/workspaces/csars/:csarId/promotionTargets');
     return {
       resource: resource,
       promotionImpact: promotionImpact,
       promotions: promotions,
+      promotionTargets : promotionTargets,
       process: function (workspaces, writeRoles) {
         var result = {
           writeWorkspaces: [],
